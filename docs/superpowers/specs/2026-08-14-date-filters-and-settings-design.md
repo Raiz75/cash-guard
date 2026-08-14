@@ -89,9 +89,9 @@ All changes stay within the existing local-first architecture (Dexie/IndexedDB, 
 - Add per-category **Edit** and **Delete** buttons in the categories grid.
 - **Edit** (`components/settings/CategoryEditDialog.tsx`, new): Dialog with name input + type
   toggle, pre-filled from the category. Uses the existing `categorySchema` for validation.
-  - On submit call new `updateCategory(id, input)` behavior:
-    - Renaming updates the category row **and** every transaction whose `category` equals the old
-      name (new repository helper `renameCategory`). Prevents silent orphaned transactions.
+  - On submit call `updateCategory(id, input)`, extended to:
+    - When the name changes, update the category row **and** every transaction whose `category`
+      equals the old name in the same `rw` transaction. Prevents silent orphaned transactions.
     - Changing type is allowed **only when no transactions use that category**; otherwise the
       type toggle is disabled with a hint.
 - **Delete** (`components/settings/DeleteCategoryDialog.tsx`, new):
