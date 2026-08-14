@@ -142,13 +142,15 @@ git commit -m "feat: show categories in a single column"
 - Consumes: `breakdown` array (built from range-filtered expenses, lines 40-48), `formatPeso` (`@/lib/format`, already imported at line 8), `RangeFilter` (already rendered at line 80)
 - Produces: `totalSpent` — sum of `breakdown` amounts
 
-- [ ] **Step 1: Compute the filtered total**
+- [ ] **Step 1: Compute the filtered total (ALL filtered expenses)**
 
-In `components/dashboard/DashboardView.tsx`, right after `const maxExpense = breakdown.length ? breakdown[0][1] : 0;` (line 49), add:
+In `components/dashboard/DashboardView.tsx`, the `expenseByCategory` map holds every expense in the selected range (built at lines 40-45, before the top-5 slice). Sum ALL of its values so the total is not capped at the 5 displayed categories. Add right after `const maxExpense = breakdown.length ? breakdown[0][1] : 0;` (line 49):
 
 ```ts
-const totalSpent = breakdown.reduce((s, [, amount]) => s + amount, 0);
+const totalSpent = [...expenseByCategory.values()].reduce((s, amount) => s + amount, 0);
 ```
+
+This sums the full filtered set — not the top-5 `breakdown` — so a range spanning 6+ categories still shows the true total.
 
 - [ ] **Step 2: Render the total row in the card header**
 
@@ -187,3 +189,4 @@ git commit -m "feat: show total in spending by category"
 - Spec item 1 (all tag icons) → Task 1. Spec item 2 (one-column list) → Task 2. Spec item 3 (filtered total) → Task 3. No gaps.
 - All code is inline above; no TBDs or references to undefined symbols. `formatPeso`, `RangeFilter`, `CardTitle`, `CardHeader` are all already imported in DashboardView.tsx.
 - `toColor` remains defined at `lib/db/schema.ts:43-50` and is still used by the "Other" default — no unused-function lint.
+- Task 3 amendment (human decision 2026-08-14): the total sums ALL filtered expenses via `expenseByCategory.values()`, not the top-5 `breakdown`, so it never undercounts.

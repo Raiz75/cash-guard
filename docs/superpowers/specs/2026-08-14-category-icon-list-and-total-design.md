@@ -24,7 +24,7 @@ Three small UI/data changes to the Cash Guard PWA:
 ### 3. Filtered total in "Spending by category"
 
 - `components/dashboard/DashboardView.tsx`:
-  - Compute `totalSpent` as the sum of the range-filtered `breakdown` amounts (`breakdown.reduce(...)`).
+  - Compute `totalSpent` as the sum of **all** expenses in the selected range — not just the top-5 `breakdown` rows shown. (The breakdown is capped at 5 categories; the total must reflect the full filtered set.)
   - In the card header, below the `RangeFilter`, render an always-visible row:
     - Muted `Total` label on the left.
     - Bold `formatPeso(totalSpent)` on the right.
