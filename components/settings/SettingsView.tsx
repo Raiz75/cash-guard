@@ -152,7 +152,7 @@ export function SettingsView() {
           <CardHeader>
             <CardTitle className="text-sm">Categories</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-2">
+          <CardContent className="flex flex-col gap-2">
             {categories.map((c) => (
               <div
                 key={c.id}
