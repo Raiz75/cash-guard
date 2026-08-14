@@ -47,6 +47,7 @@ export function DashboardView() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
   const maxExpense = breakdown.length ? breakdown[0][1] : 0;
+  const totalSpent = breakdown.reduce((s, [, amount]) => s + amount, 0);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col pb-20">
@@ -78,6 +79,10 @@ export function DashboardView() {
           <CardHeader>
             <CardTitle className="text-sm">Spending by category</CardTitle>
             <RangeFilter value={range} onChange={setRange} />
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-semibold">{formatPeso(totalSpent)}</span>
+            </div>
           </CardHeader>
           <CardContent>
             {breakdown.length === 0 ? (
