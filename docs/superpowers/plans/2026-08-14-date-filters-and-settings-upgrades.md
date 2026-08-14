@@ -194,6 +194,8 @@ Replace the `CardHeader` of the "Spending by category" card (current lines 99–
 
 `CardHeader` is a CSS grid; the `RangeFilter` div renders as its own row below the title. The breakdown rendering below it is unchanged.
 
+> **Decision (2026-08-14, human-approved):** the Spending-by-category card must ALWAYS render — including the `RangeFilter` — even when the selected range has no expenses. The original code wrapped the whole card in `breakdown.length > 0 ? <Card>…</Card> : null`, which would hide the filter (trapping users on an empty range with no way back). Change that guard: always render the `Card` and `RangeFilter`; inside `CardContent`, render an empty-state message ("No expenses in this period.") when `breakdown.length === 0` instead of the bars.
+
 - [ ] **Step 5: Verify**
 
 Run: `npm run build`
@@ -202,7 +204,7 @@ Expected: production build succeeds (no unused-import errors from removed `month
 Run: `npm run lint`
 Expected: no ESLint errors.
 
-Manual check: `npm run dev` → dashboard shows no "This month" cards; Spending by category changes with each range option and shows an empty card when the range has no expenses.
+Manual check: `npm run dev` → dashboard shows no "This month" cards; Spending by category changes with each range option; when a range has no expenses the card (and its filter) stays visible with an empty-state message.
 
 - [ ] **Step 6: Commit**
 

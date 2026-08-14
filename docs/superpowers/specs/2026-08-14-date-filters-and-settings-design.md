@@ -56,8 +56,10 @@ All changes stay within the existing local-first architecture (Dexie/IndexedDB, 
 - Keep the Total Balance card as-is (shows all-time balance + all-time income/expenses).
 - Add `RangeFilter` to the "Spending by category" card header, replacing the static
   `CardDescription` "All time" with the live control.
-- `expenseByCategory` recomputes from range-filtered expenses only; the card renders nothing
-  when the selected range has no expenses (existing `breakdown.length > 0` guard stays).
+- `expenseByCategory` recomputes from range-filtered expenses only. The card and its `RangeFilter`
+  always render; when the selected range has no expenses, show an empty-state message instead of
+  the bars (decision 2026-08-14: hiding the whole card would trap users on an empty range with no
+  way to switch back).
 
 ### 3. Transactions page (`components/transactions/TransactionsView.tsx` + `TransactionFilters.tsx`)
 
