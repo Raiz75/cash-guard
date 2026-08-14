@@ -11,12 +11,15 @@ import {
 } from "@/components/ui/select";
 import { useCategories } from "@/lib/hooks/useTransactions";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
+import { RangeFilter } from "@/components/shared/RangeFilter";
+import { rangeStartISO, type DateRange } from "@/lib/format";
 import type { Transaction, TransactionType } from "@/lib/db/schema";
 
 export interface Filters {
   type: "all" | TransactionType;
   category: string;
   search: string;
+  range: DateRange;
 }
 
 export function TransactionFilters({
@@ -30,6 +33,10 @@ export function TransactionFilters({
 
   return (
     <div className="space-y-2">
+      <RangeFilter
+        value={filters.range}
+        onChange={(range) => onChange({ ...filters, range })}
+      />
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -82,9 +89,11 @@ export function applyFilters(
   filters: Filters
 ): Transaction[] {
   const q = filters.search.toLowerCase().trim();
+  const rangeStart = filters.range === "all" ? null : rangeStartISO(filters.range);
   return transactions.filter((tx) => {
     if (filters.type !== "all" && tx.type !== filters.type) return false;
     if (filters.category !== "all" && tx.category !== filters.category) return false;
+    if (rangeStart && tx.date < rangeStart) return false;
     if (q) {
       const haystack = `${tx.description ?? ""} ${tx.category}`.toLowerCase();
       if (!haystack.includes(q)) return false;
