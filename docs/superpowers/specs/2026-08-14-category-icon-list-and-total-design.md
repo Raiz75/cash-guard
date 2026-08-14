@@ -4,18 +4,17 @@
 
 Three small UI/data changes to the Cash Guard PWA:
 
-1. **Seeded categories all use the tag icon** — instead of the current per-category icons.
+1. **All categories use the tag icon** — every category renders the tag icon, no per-category distinctions.
 2. **Settings category list is one column** — instead of the current two-column grid.
 3. **Spending by category shows a filtered total** — the sum of expenses in the selected range.
 
 ## Requirements
 
-### 1. Seeded icons → all `tag`
+### 1. All category icons → `tag`
 
 - `lib/db/schema.ts` — `seedIfEmpty`:
   - Change every default category's `icon` to `"tag"` (Salary, Freelance, Food, Transport, Shopping, Bills, Entertainment, Other). Colors stay unchanged.
-  - Existing browsers keep already-seeded categories with their old distinct icons because `seedIfEmpty` only inserts missing categories. To make the change apply to them too, run a one-time migration **inside the same `rw` transaction** (after the dedupe loop): any existing category that has a non-null `icon` gets `icon: "tag"`.
-  - Rationale for "any non-null icon": only seeded categories ever receive a non-null icon — `addCategory` (`lib/db/repository.ts`) and `importTransactions` both write `icon: null`. So targeting non-null icons precisely covers already-seeded rows and never touches user-created ones.
+  - Existing browsers keep already-seeded categories with their old distinct icons because `seedIfEmpty` only inserts missing categories. To make the change apply to them too, run a one-time migration **inside the same `rw` transaction** (after the dedupe loop): set `icon: "tag"` on **every** existing category (seeded with old icons and user-created alike) — no distinctions between categories.
 
 ### 2. One-column category list
 
@@ -33,7 +32,7 @@ Three small UI/data changes to the Cash Guard PWA:
 
 ## Out of scope
 
-- No new category icons or icon picker; user-created categories keep `icon: null` (renders as tag via `CategoryIcon` fallback).
+- No new category icons or icon picker; the tag icon applies to all categories.
 - No changes to CSV import/export, dashboard balance card, or transactions page.
 
 ## Verification
