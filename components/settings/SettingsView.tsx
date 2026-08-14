@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Download, Plus } from "lucide-react";
+import { IconUpload } from "@tabler/icons-react";
 import { useCategories } from "@/lib/hooks/useTransactions";
-import { addCategory } from "@/lib/db/repository";
-import { exportData } from "@/lib/db/repository";
+import { parseTransactionsCSV } from "@/lib/csv";
+import {
+  addCategory,
+  exportData,
+  importTransactions,
+} from "@/lib/db/repository";
 import { downloadFile } from "@/lib/format";
 import {
   categorySchema,
@@ -31,6 +36,23 @@ export function SettingsView() {
     defaultValues: { name: "", type: "expense" },
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportCSV = async (file: File) => {
+    try {
+      const text = await file.text();
+      const { rows, error } = parseTransactionsCSV(text);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      const result = await importTransactions(rows);
+      toast.success(`Imported ${result.imported} · skipped ${result.skipped}`);
+    } catch {
+      toast.error("Could not import CSV");
+    }
+  };
+
   const addNew = async (data: CategoryInput) => {
     await addCategory(data);
     toast.success(`Added "${data.name}"`);
@@ -47,16 +69,6 @@ export function SettingsView() {
     ].join("\n");
     downloadFile("cash-guard-transactions.csv", csv, "text/csv;charset=utf-8");
     toast.success("CSV downloaded");
-  };
-
-  const handleExportJSON = async () => {
-    const data = await exportData();
-    downloadFile(
-      "cash-guard-backup.json",
-      JSON.stringify(data, null, 2),
-      "application/json"
-    );
-    toast.success("Backup downloaded");
   };
 
   return (
@@ -143,9 +155,24 @@ export function SettingsView() {
             <Button variant="outline" className="w-full" onClick={handleExportCSV}>
               <Download className="mr-1 h-4 w-4" /> Export CSV
             </Button>
-            <Button variant="outline" className="w-full" onClick={handleExportJSON}>
-              <Download className="mr-1 h-4 w-4" /> Export JSON backup
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <IconUpload className="mr-1 h-4 w-4" /> Import CSV
             </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleImportCSV(file);
+                e.target.value = "";
+              }}
+            />
           </CardContent>
         </Card>
 
