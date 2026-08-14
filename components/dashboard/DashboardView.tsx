@@ -47,7 +47,7 @@ export function DashboardView() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
   const maxExpense = breakdown.length ? breakdown[0][1] : 0;
-  const totalSpent = breakdown.reduce((s, [, amount]) => s + amount, 0);
+  const totalSpent = [...expenseByCategory.values()].reduce((s, amount) => s + amount, 0);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col pb-20">
