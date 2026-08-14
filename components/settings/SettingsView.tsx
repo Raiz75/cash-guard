@@ -12,12 +12,17 @@ import {
   addCategory,
   exportData,
   importTransactions,
+  transactionCountForCategory,
 } from "@/lib/db/repository";
 import { downloadFile } from "@/lib/format";
 import {
   categorySchema,
   type CategoryInput,
 } from "@/lib/validations/transaction";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { CategoryEditDialog } from "@/components/settings/CategoryEditDialog";
+import { DeleteCategoryDialog } from "@/components/settings/DeleteCategoryDialog";
+import type { Category } from "@/lib/db/schema";
 import { Header } from "@/components/shared/Header";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
@@ -37,6 +42,27 @@ export function SettingsView() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [editing, setEditing] = useState<{ category: Category; inUse: number } | null>(null);
+  const [deleting, setDeleting] = useState<{
+    category: Category;
+    count: number;
+    candidates: Category[];
+  } | null>(null);
+
+  const openEdit = async (c: Category) => {
+    const inUse = await transactionCountForCategory(c.name);
+    setEditing({ category: c, inUse });
+  };
+
+  const openDelete = async (c: Category) => {
+    const count = await transactionCountForCategory(c.name);
+    setDeleting({
+      category: c,
+      count,
+      candidates: categories.filter((x) => x.type === c.type && x.id !== c.id),
+    });
+  };
 
   const handleImportCSV = async (file: File) => {
     try {
@@ -130,18 +156,39 @@ export function SettingsView() {
             {categories.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-1 rounded-lg border px-3 py-2 text-sm"
               >
                 <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
                   <CategoryIcon name={c.icon} className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="truncate">{c.name}</span>
                 </span>
-<Badge
-                  variant={c.type === "income" ? "default" : "destructive"}
-                  className="ml-1 shrink-0 text-xs"
-                >
-                  {c.type === "income" ? "In" : "Ex"}
-                </Badge>
+                <span className="flex shrink-0 items-center gap-0.5">
+                  <Badge
+                    variant={c.type === "income" ? "default" : "destructive"}
+                    className="ml-1 text-xs"
+                  >
+                    {c.type === "income" ? "In" : "Ex"}
+                  </Badge>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => void openEdit(c)}
+                    aria-label={`Edit ${c.name}`}
+                  >
+                    <IconPencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => void openDelete(c)}
+                    aria-label={`Delete ${c.name}`}
+                  >
+                    <IconTrash className="h-3.5 w-3.5" />
+                  </Button>
+                </span>
               </div>
             ))}
           </CardContent>
@@ -182,6 +229,30 @@ export function SettingsView() {
       </main>
 
       <BottomNav />
+
+      {editing ? (
+        <CategoryEditDialog
+          key={editing.category.id}
+          category={editing.category}
+          inUse={editing.inUse}
+          open
+          onOpenChange={(o) => {
+            if (!o) setEditing(null);
+          }}
+        />
+      ) : null}
+      {deleting ? (
+        <DeleteCategoryDialog
+          key={deleting.category.id}
+          category={deleting.category}
+          count={deleting.count}
+          candidates={deleting.candidates}
+          open
+          onOpenChange={(o) => {
+            if (!o) setDeleting(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
