@@ -83,7 +83,9 @@ export async function importTransactions(
 
   await db.transaction("rw", db.transactions, db.categories, async () => {
     const categories = await db.categories.toArray();
-    const existing = new Set(categories.map((c) => `${c.type}:${c.name.toLowerCase()}`));
+    const storedNames = new Map(
+      categories.map((c) => [`${c.type}:${c.name.toLowerCase()}`, c.name])
+    );
 
     const toAdd: Transaction[] = [];
     for (const row of rows) {
@@ -94,12 +96,14 @@ export async function importTransactions(
       }
       const { type, amount, category, description, date } = parsed.data;
       const key = `${type}:${category.toLowerCase()}`;
-      if (!existing.has(key)) {
-        existing.add(key);
-        createdCategories.add(category.trim());
+      let storedName = storedNames.get(key);
+      if (!storedName) {
+        storedName = category.trim();
+        storedNames.set(key, storedName);
+        createdCategories.add(storedName);
         await db.categories.add({
           id: newId(),
-          name: category.trim(),
+          name: storedName,
           type,
           icon: null,
           color: null,
@@ -109,7 +113,7 @@ export async function importTransactions(
         id: newId(),
         type,
         amount,
-        category: category.trim(),
+        category: storedName,
         description: description?.trim() || null,
         date,
         createdAt: Date.now(),

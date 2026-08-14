@@ -40,6 +40,7 @@ export function parseTransactionsCSV(text: string): {
   rows: CsvRow[];
   error: string | null;
 } {
+  text = text.replace(/^\uFEFF/, "");
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   const nonEmpty = lines.filter((l) => l.trim().length > 0);
   if (nonEmpty.length === 0) return { rows: [], error: "CSV is empty" };

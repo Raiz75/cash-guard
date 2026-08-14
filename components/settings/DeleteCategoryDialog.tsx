@@ -66,18 +66,24 @@ export function DeleteCategoryDialog({
         {needTarget ? (
           <div className="space-y-1.5">
             <Label htmlFor="reassign">Move transactions to</Label>
-            <Select value={target || null} onValueChange={(v) => setTarget(v ?? "")}>
-              <SelectTrigger id="reassign" className="w-full">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {candidates.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {candidates.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                You need another {category.type} category to move transactions to.
+              </p>
+            ) : (
+              <Select value={target || null} onValueChange={(v) => setTarget(v ?? "")}>
+                <SelectTrigger id="reassign" className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidates.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         ) : null}
         <DialogFooter className="gap-2">
