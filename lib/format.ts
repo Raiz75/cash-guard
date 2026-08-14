@@ -27,6 +27,16 @@ export function monthRange(anchor = new Date()): { start: string; end: string } 
   return { start, end };
 }
 
+export type DateRange = "all" | "today" | "7d" | "1m";
+
+export function rangeStartISO(range: DateRange): string | null {
+  if (range === "all") return null;
+  const now = new Date();
+  const days = range === "today" ? 0 : range === "7d" ? 6 : 29;
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days);
+  return toISODate(start);
+}
+
 export function formatDisplayDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1, d);

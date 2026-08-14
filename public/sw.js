@@ -1,4 +1,4 @@
-const CACHE = "cash-guard-v1";
+const CACHE = "cash-guard-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -6,8 +6,7 @@ self.addEventListener("install", (event) => {
       cache.addAll([
         "/",
         "/manifest.webmanifest",
-        "/icons/icon-192.png",
-        "/icons/icon-512.png",
+        "/images/android/launchericon-512x512.png",
       ])
     )
   );

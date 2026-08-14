@@ -28,6 +28,7 @@ export function TransactionsView() {
     type: "all",
     category: "all",
     search: "",
+    range: "all",
   });
 
   const [dialogKey, setDialogKey] = useState(0);
@@ -42,16 +43,6 @@ export function TransactionsView() {
     () => applyFilters(transactions, filters),
     [transactions, filters]
   );
-
-  const totals = useMemo(() => {
-    let income = 0;
-    let expense = 0;
-    for (const t of filtered) {
-      if (t.type === "income") income += t.amount;
-      else expense += t.amount;
-    }
-    return { income, expense, net: income - expense };
-  }, [filtered]);
 
   const openAdd = () => {
     setDialogKey((k) => k + 1);
@@ -82,14 +73,6 @@ export function TransactionsView() {
         </Button>
 
         <TransactionFilters filters={filters} onChange={setFilters} />
-
-        <Card>
-          <CardContent className="flex items-center justify-between py-3 text-sm">
-            <span className="text-primary font-medium">{totals.income} income</span>
-            <span className="text-destructive font-medium">{totals.expense} expense</span>
-            <span className="font-semibold">{totals.net} net</span>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardContent className="pt-2">
