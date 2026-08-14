@@ -51,13 +51,13 @@ function toColor(input: string): string {
 
 export async function seedIfEmpty(): Promise<void> {
   const defaults: Omit<Category, "id">[] = [
-    { name: "Salary", type: "income", icon: "banknote", color: "#2dd4bf" },
-    { name: "Freelance", type: "income", icon: "code", color: "#38bdf8" },
-    { name: "Food", type: "expense", icon: "soup", color: "#fb7185" },
-    { name: "Transport", type: "expense", icon: "car", color: "#fbbf24" },
-    { name: "Shopping", type: "expense", icon: "shopping-bag", color: "#a78bfa" },
-    { name: "Bills", type: "expense", icon: "receipt", color: "#22d3ee" },
-    { name: "Entertainment", type: "expense", icon: "clapperboard", color: "#f472b6" },
+    { name: "Salary", type: "income", icon: "tag", color: "#2dd4bf" },
+    { name: "Freelance", type: "income", icon: "tag", color: "#38bdf8" },
+    { name: "Food", type: "expense", icon: "tag", color: "#fb7185" },
+    { name: "Transport", type: "expense", icon: "tag", color: "#fbbf24" },
+    { name: "Shopping", type: "expense", icon: "tag", color: "#a78bfa" },
+    { name: "Bills", type: "expense", icon: "tag", color: "#22d3ee" },
+    { name: "Entertainment", type: "expense", icon: "tag", color: "#f472b6" },
     { name: "Other", type: "expense", icon: "tag", color: toColor("Other") },
   ];
 
@@ -82,5 +82,7 @@ export async function seedIfEmpty(): Promise<void> {
     if (keysToAdd.length > 0) {
       await db.categories.bulkPut(keysToAdd.map((c) => ({ id: newId(), ...c })));
     }
+
+    await db.categories.toCollection().modify({ icon: "tag" });
   });
 }
