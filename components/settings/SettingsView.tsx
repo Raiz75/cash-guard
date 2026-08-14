@@ -87,10 +87,16 @@ export function SettingsView() {
 
   const handleExportCSV = async () => {
     const { transactions } = await exportData();
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const timestamp =
+      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
+      `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const csv = [
-      ["date", "type", "amount", "category", "description"].join(","),
+      `# Exported: ${timestamp}`,
+      ["id", "date", "type", "amount", "category", "description"].join(","),
       ...transactions.map((t) =>
-        [t.date, t.type, t.amount, `"${t.category}"`, `"${t.description ?? ""}"`].join(",")
+        [t.id, t.date, t.type, t.amount, `"${t.category}"`, `"${t.description ?? ""}"`].join(",")
       ),
     ].join("\n");
     downloadFile("cash-guard-transactions.csv", csv, "text/csv;charset=utf-8");

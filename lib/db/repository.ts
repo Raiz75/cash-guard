@@ -82,6 +82,8 @@ export async function importTransactions(
   let skipped = 0;
 
   await db.transaction("rw", db.transactions, db.categories, async () => {
+    const existingIds = new Set((await db.transactions.toArray()).map((t) => t.id));
+    const batchIds = new Set<string>();
     const categories = await db.categories.toArray();
     const storedNames = new Map(
       categories.map((c) => [`${c.type}:${c.name.toLowerCase()}`, c.name])
@@ -94,7 +96,11 @@ export async function importTransactions(
         skipped++;
         continue;
       }
-      const { type, amount, category, description, date } = parsed.data;
+      const { id, type, amount, category, description, date } = parsed.data;
+      if (id && (existingIds.has(id) || batchIds.has(id))) {
+        skipped++;
+        continue;
+      }
       const key = `${type}:${category.toLowerCase()}`;
       let storedName = storedNames.get(key);
       if (!storedName) {
@@ -109,8 +115,10 @@ export async function importTransactions(
           color: null,
         });
       }
+      const newIdVal = id || newId();
+      if (id) batchIds.add(id);
       toAdd.push({
-        id: newId(),
+        id: newIdVal,
         type,
         amount,
         category: storedName,

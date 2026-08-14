@@ -1,4 +1,5 @@
 export interface CsvRow {
+  id?: string;
   date: string;
   type: string;
   amount: number;
@@ -42,7 +43,10 @@ export function parseTransactionsCSV(text: string): {
 } {
   text = text.replace(/^\uFEFF/, "");
   const lines = text.replace(/\r\n/g, "\n").split("\n");
-  const nonEmpty = lines.filter((l) => l.trim().length > 0);
+  const nonEmpty = lines.filter((l) => {
+    const t = l.trim();
+    return t.length > 0 && !t.startsWith("#");
+  });
   if (nonEmpty.length === 0) return { rows: [], error: "CSV is empty" };
 
   const header = parseCSVLine(nonEmpty[0]).map((h) => h.trim().toLowerCase());
@@ -52,6 +56,7 @@ export function parseTransactionsCSV(text: string): {
   const amountIdx = idx("amount");
   const categoryIdx = idx("category");
   const descIdx = idx("description");
+  const idIdx = idx("id");
 
   if (dateIdx === -1 || typeIdx === -1 || amountIdx === -1 || categoryIdx === -1) {
     return { rows: [], error: "CSV must have date, type, amount, category columns" };
@@ -67,6 +72,8 @@ export function parseTransactionsCSV(text: string): {
     const amount = Number(get(amountIdx));
     if (!date || !type || !category || Number.isNaN(amount)) continue;
     const row: CsvRow = { date, type, amount, category };
+    const id = get(idIdx);
+    if (id) row.id = id;
     const description = get(descIdx);
     if (description) row.description = description;
     rows.push(row);
