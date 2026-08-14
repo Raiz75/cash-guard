@@ -74,40 +74,44 @@ export function DashboardView() {
           <Plus className="h-4 w-4" /> Add transaction
         </Button>
 
-        {breakdown.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Spending by category</CardTitle>
-              <RangeFilter value={range} onChange={setRange} />
-            </CardHeader>
-            <CardContent className="space-y-2.5">
-              {breakdown.map(([name, amount]) => {
-                const cat = categories.find((c) => c.name === name);
-                const pct = maxExpense ? Math.round((amount / maxExpense) * 100) : 0;
-                return (
-                  <div key={name}>
-                    <div className="flex justify-between text-xs">
-                      <span className="inline-flex items-center gap-1 font-medium">
-                        <CategoryIcon name={cat?.icon ?? null} className="h-3.5 w-3.5 text-muted-foreground" />
-                        {name}
-                      </span>
-                      <span>{formatPeso(amount)}</span>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Spending by category</CardTitle>
+            <RangeFilter value={range} onChange={setRange} />
+          </CardHeader>
+          <CardContent>
+            {breakdown.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No expenses in this period.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {breakdown.map(([name, amount]) => {
+                  const cat = categories.find((c) => c.name === name);
+                  const pct = maxExpense ? Math.round((amount / maxExpense) * 100) : 0;
+                  return (
+                    <div key={name}>
+                      <div className="flex justify-between text-xs">
+                        <span className="inline-flex items-center gap-1 font-medium">
+                          <CategoryIcon name={cat?.icon ?? null} className="h-3.5 w-3.5 text-muted-foreground" />
+                          {name}
+                        </span>
+                        <span>{formatPeso(amount)}</span>
+                      </div>
+                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: cat?.color ?? "var(--primary)",
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: cat?.color ?? "var(--primary)",
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        ) : null}
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="flex-row items-center justify-between">
