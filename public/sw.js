@@ -1,11 +1,12 @@
 /**
  * FILE NAME: sw.js
  *
- * ROLE: PWA service worker — caches the app shell on install, serves cached-first with network fallback, and cleans up old cache versions on activate.
+ * ROLE: PWA service worker — caches the app shell on install, serves cached-first with network fallback, cleans up old cache versions on activate, keeps new workers waiting, and responds to SKIP_WAITING to apply user-approved updates.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Cache-first for same-origin GET requests; cross-origin and non-GET are ignored.
- * ? - The CACHE name encodes a version ("cash-guard-v2"); bump it whenever the shell changes so activate() evicts stale caches.
+ * ? - The CACHE name encodes VERSION ("cash-guard-v" + VERSION); bump VERSION on every release that changes the app shell so activate() evicts stale caches and the UI detects a byte-different sw.js.
+ * ? - skipWaiting() is intentionally NOT called on install so new workers sit in "waiting" until the user approves via a SKIP_WAITING message.
  * ? - Offline navigation falls back to the cached "/" (the app shell).
  *
  * AFFECTS:
@@ -22,6 +23,7 @@
  * ? - Bump the CACHE version string when the cache contents change
  * ? - Verify install/activate/fetch handlers still work after edits
  * * - Fetch handler must never cache POST or cross-origin requests
+ * * - VERSION must be bumped on each release
  *
  * AI INSTRUCTIONS
  * - When editing this file, ALWAYS check the AFFECTS list first
@@ -34,7 +36,8 @@
  * - Green (*) items are nice-to-have; skip if not applicable
  */
 
-const CACHE = "cash-guard-v2";
+const VERSION = 3;
+const CACHE = "cash-guard-v" + VERSION;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -46,7 +49,6 @@ self.addEventListener("install", (event) => {
       ])
     )
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -56,6 +58,12 @@ self.addEventListener("activate", (event) => {
     )
   );
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
