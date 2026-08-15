@@ -14,7 +14,7 @@ import {
   importTransactions,
   transactionCountForCategory,
 } from "@/lib/db/repository";
-import { downloadFile } from "@/lib/format";
+import { downloadFile, todayISO } from "@/lib/format";
 import {
   categorySchema,
   type CategoryInput,
@@ -99,7 +99,7 @@ export function SettingsView() {
         [t.id, t.date, t.type, t.amount, `"${t.category}"`, `"${t.description ?? ""}"`].join(",")
       ),
     ].join("\n");
-    downloadFile("cash-guard-transactions.csv", csv, "text/csv;charset=utf-8");
+    downloadFile(`cash-guard-transactions-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
     toast.success("CSV downloaded");
   };
 
