@@ -6,6 +6,39 @@ A **mobile-first personal finance tracker PWA** built with Next.js 16 (App Route
 
 **Key architectural fact: the app is local-first.** All data lives in the browser's IndexedDB via Dexie. There are **no API routes, no server database, no ORM, no environment secrets** — nothing is ever sent to a server. This keeps hosting free and makes it fully offline-capable.
 
+**Live deployment:** the app is published at **https://cash-guard-jet.vercel.app**. Users install it from there (see "Downloading / installing the app" below). There is no staging environment — pushing to `main` and deploying on Vercel updates the live site.
+
+## Setting up after pulling the repo
+
+Fresh clone? Do this once:
+
+```bash
+# 1. Node.js >= 20.9 is required (Next.js 16). Verify before anything else.
+node -v
+
+# 2. Install dependencies
+npm install
+
+# 3. Run the dev server (no env vars, no DB to provision)
+npm run dev
+```
+
+- There is **no `.env` file and no environment configuration** — nothing to copy, fill in, or mint. If a setup guide mentions secrets, it's describing a different project.
+- `npm run build` runs `scripts/stamp-version.mjs` first, which stamps the SemVer from `package.json` into `public/sw.js`, `public/manifest.webmanifest`, and regenerates `lib/version.ts`. This is automatic and expected — the stamped files appear as working-tree changes and are committed with the release.
+- The service worker only registers in production builds (`process.env.NODE_ENV === "production"`), so update-check behavior won't show in `next dev`.
+
+## Downloading / installing the app (for users)
+
+Cash Guard is a PWA — "download" means **install it to the home screen**:
+
+1. Open **https://cash-guard-jet.vercel.app** in a browser.
+2. **Android / Chrome:** use the browser menu → **Install app** (or "Add to Home screen"). **iOS / Safari:** Share → **Add to Home Screen**. **Desktop Chrome/Edge:** the install icon in the address bar.
+3. Once installed it launches full-screen like a native app and works offline.
+
+**Updating to a new version:** Cash Guard checks for updates on load. When a new version is deployed, open the app → **Settings → Update** → the status dot lights up → **Check for updates** → **Restart app**. There is no app-store update flow.
+
+**Moving data between devices:** data lives in the browser. Export via **Settings → Export CSV / Download JSON backup**, then import on the other device.
+
 ## How data works
 
 - **Schema** (`lib/db/schema.ts`): two Dexie tables — `transactions` (type income/expense, amount, category, description, date, createdAt) and `categories` (name, type, icon as a Tabler icon *name string*, color).
