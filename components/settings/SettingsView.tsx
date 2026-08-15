@@ -1,7 +1,7 @@
 /**
  * FILE NAME: SettingsView.tsx
  *
- * ROLE: Settings page — add/edit/delete categories, export CSV, import CSV, and an Update card with a new-version check + restart dialog.
+ * ROLE: Settings page — add/edit/delete categories, export CSV, import CSV, and an Update card with a new-version check + restart dialog plus a current app-version line.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field.
@@ -9,6 +9,7 @@
  * ? - Export builds the CSV inline (with an # Exported timestamp) and downloads via downloadFile with a date-stamped filename.
  * ? - Import reads the file, parses via parseTransactionsCSV, then importTransactions.
  * ? - Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads.
+ * ? - Update card shows the current app version (APP_VERSION from the generated lib/version.ts) in muted small text beneath the buttons.
  *
  * AFFECTS:
  * ! - app/settings/page.tsx (CRITICAL: rendered by the route)
@@ -16,6 +17,7 @@
  *
  * AFFECTED BY:
  * ? - lib/hooks/useServiceWorkerUpdate.ts (update status/actions)
+ * ? - lib/version.ts (generated APP_VERSION constant shown in the Update card)
  * ? - lib/hooks/useTransactions.ts (useCategories)
  * ? - lib/csv.ts (parseTransactionsCSV)
  * ? - lib/db/repository.ts (addCategory, exportData, importTransactions, transactionCountForCategory)
@@ -66,6 +68,7 @@ import {
 import { IconPencil, IconTrash, IconRefresh, IconDownload } from "@tabler/icons-react";
 import { useServiceWorkerUpdate } from "@/lib/hooks/useServiceWorkerUpdate";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -326,6 +329,7 @@ export function SettingsView() {
                 <IconDownload className="mr-1 h-4 w-4" /> Restart app
               </Button>
             ) : null}
+            <p className="text-xs text-muted-foreground">Version {APP_VERSION}</p>
           </CardContent>
         </Card>
 
