@@ -159,44 +159,50 @@ export function SettingsView() {
             <CardTitle className="text-sm">Categories</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            {categories.map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center justify-between gap-1 rounded-lg border px-3 py-2 text-sm"
-              >
-                <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
-                  <CategoryIcon name={c.icon} className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{c.name}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-0.5">
-                  <Badge
-                    variant={c.type === "income" ? "default" : "destructive"}
-                    className="ml-1 text-xs"
-                  >
-                    {c.type === "income" ? "In" : "Ex"}
-                  </Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => void openEdit(c)}
-                    aria-label={`Edit ${c.name}`}
-                  >
-                    <IconPencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => void openDelete(c)}
-                    aria-label={`Delete ${c.name}`}
-                  >
-                    <IconTrash className="h-3.5 w-3.5" />
-                  </Button>
-                </span>
-              </div>
-            ))}
+            {categories.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No categories yet
+              </p>
+            ) : (
+              categories.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between gap-1 rounded-lg border px-3 py-2 text-sm"
+                >
+                  <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
+                    <CategoryIcon name={c.icon} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{c.name}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-0.5">
+                    <Badge
+                      variant={c.type === "income" ? "default" : "destructive"}
+                      className="ml-1 text-xs"
+                    >
+                      {c.type === "income" ? "In" : "Ex"}
+                    </Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => void openEdit(c)}
+                      aria-label={`Edit ${c.name}`}
+                    >
+                      <IconPencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => void openDelete(c)}
+                      aria-label={`Delete ${c.name}`}
+                    >
+                      <IconTrash className="h-3.5 w-3.5" />
+                    </Button>
+                  </span>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
