@@ -1,3 +1,31 @@
+/**
+ * FILE NAME: sw.js
+ *
+ * ROLE: PWA service worker — caches the app shell on install, serves cached-first with
+ * network fallback, and cleans up old cache versions on activate.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Cache-first for same-origin GET requests; cross-origin and non-GET are ignored.
+ * ? - The CACHE name encodes a version ("cash-guard-v2"); bump it whenever the shell
+ *     changes so activate() evicts stale caches.
+ * ? - Offline navigation falls back to the cached "/" (the app shell).
+ *
+ * AFFECTS:
+ * ! - Offline/PWA behavior of the whole app (CRITICAL: a broken SW breaks offline use)
+ * ? - components/dashboard/DashboardView.tsx (registers this file in production)
+ *
+ * AFFECTED BY:
+ * ? - public/ files listed in cache.addAll (/, manifest.webmanifest, icons)
+ * ? - App shell changes (new routes/assets must be added to the cache list)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Bump the CACHE version string when the cache contents change
+ * ? - Verify install/activate/fetch handlers still work after edits
+ * * - Fetch handler must never cache POST or cross-origin requests
+ */
+
 const CACHE = "cash-guard-v2";
 
 self.addEventListener("install", (event) => {
