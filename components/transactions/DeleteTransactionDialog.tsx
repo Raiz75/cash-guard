@@ -18,6 +18,16 @@
  * ! - npm run build
  * ! - npm run lint
  * ? - Verify toast on success and error; dialog closes in both cases
+ *
+ * AI INSTRUCTIONS
+ * - When editing this file, ALWAYS check the AFFECTS list first
+ * - After changes, run ALL tests listed under ON FILE EDIT
+ * - If AFFECTED BY files change, verify this file still works
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
+ *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Red (!) items are CRITICAL and cannot be skipped
+ * - Blue (?) items are important but not blocking
+ * - Green (*) items are nice-to-have; skip if not applicable
  */
 
 "use client";

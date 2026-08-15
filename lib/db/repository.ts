@@ -32,6 +32,16 @@
  * ? - Re-verify import dedupe (existingIds vs batchIds), rename cascade, and type-lock logic
  * * - Never call a rw transaction from inside a useLiveQuery callback
  * * - Empty CSV / all-skipped imports must return imported=0 without partial writes
+ *
+ * AI INSTRUCTIONS
+ * - When editing this file, ALWAYS check the AFFECTS list first
+ * - After changes, run ALL tests listed under ON FILE EDIT
+ * - If AFFECTED BY files change, verify this file still works
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
+ *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Red (!) items are CRITICAL and cannot be skipped
+ * - Blue (?) items are important but not blocking
+ * - Green (*) items are nice-to-have; skip if not applicable
  */
 
 import { db, newId, type Transaction, type Category } from "./schema";

@@ -31,6 +31,16 @@
  * ? - Bump/verify Dexie version(...) when adding columns, or old installs lose data
  * ? - Verify index fields match the queries in useTransactions.ts
  * * - Adding a required field breaks CSV import, forms, and repository writes — check all
+ *
+ * AI INSTRUCTIONS
+ * - When editing this file, ALWAYS check the AFFECTS list first
+ * - After changes, run ALL tests listed under ON FILE EDIT
+ * - If AFFECTED BY files change, verify this file still works
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
+ *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Red (!) items are CRITICAL and cannot be skipped
+ * - Blue (?) items are important but not blocking
+ * - Green (*) items are nice-to-have; skip if not applicable
  */
 
 import Dexie, { type Table } from "dexie";

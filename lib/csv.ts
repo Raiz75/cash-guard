@@ -23,6 +23,16 @@
  * ! - npm run lint
  * ? - Verify quoted commas, "" escapes, BOM, and CRLF are handled
  * * - Header names are lowercased/trimmed — a renamed column silently stops importing
+ *
+ * AI INSTRUCTIONS
+ * - When editing this file, ALWAYS check the AFFECTS list first
+ * - After changes, run ALL tests listed under ON FILE EDIT
+ * - If AFFECTED BY files change, verify this file still works
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
+ *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Red (!) items are CRITICAL and cannot be skipped
+ * - Blue (?) items are important but not blocking
+ * - Green (*) items are nice-to-have; skip if not applicable
  */
 
 export interface CsvRow {
