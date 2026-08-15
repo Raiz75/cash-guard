@@ -5,7 +5,7 @@
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Cache-first for same-origin GET requests; cross-origin and non-GET are ignored.
- * ? - The CACHE name encodes VERSION ("cash-guard-v" + VERSION); bump VERSION on every release that changes the app shell so activate() evicts stale caches and the UI detects a byte-different sw.js.
+ * ? - The CACHE name encodes VERSION ("cash-guard-v" + VERSION); VERSION is auto-stamped from package.json at build time (const VERSION = "0.1.0";), so the cache name and the byte-diff update signal are derived, not hand-bumped.
  * ? - skipWaiting() is intentionally NOT called on install so new workers sit in "waiting" until the user approves via a SKIP_WAITING message.
  * ? - Offline navigation falls back to the cached "/" (the app shell).
  *
@@ -22,7 +22,7 @@
  * ! - npm run lint
  * ? - Verify install/activate/fetch handlers still work after edits
  * * - Fetch handler must never cache POST or cross-origin requests
- * * - VERSION must be bumped on each release (the CACHE name derives from it)
+ * * - VERSION is stamped by scripts/stamp-version.mjs on `npm run build`; bump package.json version to release
  *
  * AI INSTRUCTIONS
  * - When editing this file, ALWAYS check the AFFECTS list first
@@ -35,7 +35,7 @@
  * - Green (*) items are nice-to-have; skip if not applicable
  */
 
-const VERSION = 3;
+const VERSION = "0.1.0";
 const CACHE = "cash-guard-v" + VERSION;
 
 self.addEventListener("install", (event) => {
