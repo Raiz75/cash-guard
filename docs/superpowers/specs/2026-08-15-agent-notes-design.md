@@ -61,6 +61,8 @@ Every file above gets this block at the very top, above all imports and code. Th
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
+ *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable
@@ -81,6 +83,8 @@ For CSS (`app/globals.css`) the same block works unchanged (`/* */` comments). F
 - Add an "Agent notes" section to `AGENTS.md` containing the canonical template and the rule:
 
 > **Every new file created in this project must include the agent-notes header at the top.** Fill in ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT with real per-file analysis. Omit sections that don't apply. Verify `npm run build` and `npm run lint` still pass.
+>
+> **Keep headers current:** whenever a file is edited, update its header (ROLE, decisions, AFFECTS, AFFECTED BY, ON FILE EDIT) so the notes always match the code. Never leave a stale header behind.
 
 - `CLAUDE.md` imports `AGENTS.md`, so it is automatically covered.
 
