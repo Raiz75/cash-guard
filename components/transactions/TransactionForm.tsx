@@ -1,3 +1,32 @@
+/**
+ * FILE NAME: TransactionForm.tsx
+ *
+ * ROLE: React Hook Form + Zod form for adding and editing transactions (type, amount,
+ * category, date, description).
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - useWatch (not form.watch) drives the type/category selects — memo-safe for the
+ *     React Compiler lint.
+ * ? - When adding, the first category of the selected type is auto-selected after load.
+ * ? - A local TextField helper wraps Input for number/date variants.
+ *
+ * AFFECTS:
+ * ! - components/transactions/TransactionDialog.tsx (CRITICAL: rendered inside the dialog)
+ *
+ * AFFECTED BY:
+ * ? - lib/validations/transaction.ts (transactionSchema, TransactionInput)
+ * ? - lib/db/repository.ts (addTransaction, updateTransaction)
+ * ? - lib/hooks/useTransactions.ts (useCategories)
+ * ? - lib/format.ts (todayISO default date)
+ * ? - components/shared/CategoryIcon.tsx (select option icons)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify edit prefill, auto-select first category, validation errors, and toasts
+ * * - Editing keeps the existing id; switching type must not lose category selection
+ */
+
 "use client";
 
 import { useEffect } from "react";

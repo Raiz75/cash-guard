@@ -1,3 +1,29 @@
+/**
+ * FILE NAME: TransactionList.tsx
+ *
+ * ROLE: Renders a transaction list; each row shows an income/expense indicator, amount,
+ * and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead
+ *     of text badges.
+ * ? - Income rows use text-primary (teal) and "+"; expense rows use text-destructive and "-".
+ *
+ * AFFECTS:
+ * ? - components/transactions/TransactionsView.tsx (renders TransactionList)
+ *
+ * AFFECTED BY:
+ * ? - lib/db/schema.ts (Transaction type)
+ * ? - lib/format.ts (formatPeso, formatDisplayDate)
+ * ? - lib/utils.ts (cn for row styling)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify aria-labels, empty state text, and +/- amount signs
+ * * - Long descriptions must truncate without breaking layout
+ */
+
 "use client";
 
 import { cn } from "@/lib/utils";

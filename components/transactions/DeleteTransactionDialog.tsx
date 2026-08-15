@@ -1,3 +1,25 @@
+/**
+ * FILE NAME: DeleteTransactionDialog.tsx
+ *
+ * ROLE: Confirmation dialog for deleting a transaction, with success/error toasts.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Calls deleteTransaction and always closes via onOpenChange(false) afterward.
+ *
+ * AFFECTS:
+ * ? - components/transactions/TransactionsView.tsx (rendered with the tx to delete)
+ *
+ * AFFECTED BY:
+ * ? - lib/db/repository.ts (deleteTransaction)
+ * ? - lib/db/schema.ts (Transaction type)
+ * ? - components/ui/dialog.tsx, components/ui/button.tsx, sonner
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify toast on success and error; dialog closes in both cases
+ */
+
 "use client";
 
 import { toast } from "sonner";

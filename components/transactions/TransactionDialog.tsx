@@ -1,3 +1,26 @@
+/**
+ * FILE NAME: TransactionDialog.tsx
+ *
+ * ROLE: Dialog wrapper for TransactionForm, used for both add and edit modes.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Pure presentation: open/onOpenChange/title/id/initial are passed through; the form
+ *     closes the dialog via onDone → onOpenChange(false).
+ *
+ * AFFECTS:
+ * ? - components/transactions/TransactionsView.tsx (renders it twice: add + edit)
+ *
+ * AFFECTED BY:
+ * ? - components/transactions/TransactionForm.tsx
+ * ? - components/ui/dialog.tsx
+ * ? - lib/validations/transaction.ts (TransactionInput)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify both add and edit dialogs open/close correctly
+ */
+
 "use client";
 
 import type { TransactionInput } from "@/lib/validations/transaction";
