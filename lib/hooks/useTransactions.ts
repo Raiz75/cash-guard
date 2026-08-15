@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, seedIfEmpty, type Transaction, type Category } from "@/lib/db/schema";
+import { db, type Transaction, type Category } from "@/lib/db/schema";
 
 export function useCategories(type?: "income" | "expense"): Category[] | undefined {
-  useEffect(() => {
-    void seedIfEmpty();
-  }, []);
-
   return useLiveQuery(async () => {
     const rows = await db.categories.orderBy("name").toArray();
     return type ? rows.filter((c) => c.type === type) : rows;

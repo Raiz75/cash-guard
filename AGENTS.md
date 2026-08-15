@@ -10,8 +10,8 @@ A **mobile-first personal finance tracker PWA** built with Next.js 16 (App Route
 
 - **Schema** (`lib/db/schema.ts`): two Dexie tables — `transactions` (type income/expense, amount, category, description, date, createdAt) and `categories` (name, type, icon as a Tabler icon *name string*, color).
 - **Repository** (`lib/db/repository.ts`): the only module that touches IndexedDB — CRUD for transactions and categories, plus data export.
-- **Hooks** (`lib/hooks/useTransactions.ts`): `useLiveQuery` drives the UI reactively. `useCategories` seeds default categories on mount.
-- **Seeding** (`seedIfEmpty` in schema.ts): runs inside a single Dexie rw-transaction, dedupes categories by `type + name` (case-insensitive), and only inserts missing defaults. **Never call a write (rw) transaction inside a `useLiveQuery` callback** — live queries are read-only and this throws a `ReadonlyError`.
+- **Hooks** (`lib/hooks/useTransactions.ts`): `useLiveQuery` drives the UI reactively.
+- **No seeding**: the DB starts empty. There is no `seedIfEmpty` / defaults list — categories come only from user action (Add category form) or CSV import. Deleted categories stay deleted. **Never call a write (rw) transaction inside a `useLiveQuery` callback** — live queries are read-only and this throws a `ReadonlyError`.
 - **Backup/restore**: Settings → Export CSV / JSON. Data is per-browser; moving devices requires exporting/importing.
 
 ## Conventions & gotchas
