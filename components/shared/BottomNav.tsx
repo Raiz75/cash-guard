@@ -1,3 +1,26 @@
+/**
+ * FILE NAME: BottomNav.tsx
+ *
+ * ROLE: Fixed bottom navigation (Home / Transactions / Settings) with active-state
+ * highlighting based on the current pathname.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Fixed positioning means page shells add pb-20 so content clears the nav.
+ * ? - lucide icons; active link uses text-primary, inactive uses text-muted-foreground.
+ *
+ * AFFECTS:
+ * ! - Every page shell (DashboardView, TransactionsView, SettingsView)
+ *     (CRITICAL: all three render BottomNav and rely on its fixed height)
+ *
+ * AFFECTED BY:
+ * ? - app route paths (/, /transactions, /settings) — adding a route changes this
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify active highlighting and that pb-20 shells still clear the nav
+ */
+
 "use client";
 
 import Link from "next/link";

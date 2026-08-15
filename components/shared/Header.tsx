@@ -1,3 +1,29 @@
+/**
+ * FILE NAME: Header.tsx
+ *
+ * ROLE: Sticky top bar with title/subtitle and a hydrated theme toggle (dark/light).
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Uses useHydrated() to gate the icon render — avoids hydration mismatch for the
+ *     resolvedTheme-dependent toggle.
+ * ? - lucide Moon/Sun icons; semantic tokens (bg-background/80 backdrop-blur) per theme.
+ *
+ * AFFECTS:
+ * ! - components/dashboard/DashboardView.tsx, components/transactions/TransactionsView.tsx,
+ *     components/settings/SettingsView.tsx (CRITICAL: all three pages render Header)
+ *
+ * AFFECTED BY:
+ * ? - lib/hooks/useHydrated.ts (hydration gating)
+ * ? - next-themes (resolvedTheme/setTheme)
+ * ? - components/ui/button.tsx (variant="ghost" size="icon")
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify no hydration mismatch and the toggle flips correctly
+ * * - title/subtitle props must stay optional-safe for SettingsView (subtitle omitted)
+ */
+
 "use client";
 
 import { useTheme } from "next-themes";

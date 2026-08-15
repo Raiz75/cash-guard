@@ -1,3 +1,33 @@
+/**
+ * FILE NAME: DashboardView.tsx
+ *
+ * ROLE: Dashboard page — total balance, add-transaction shortcut, spending-by-category
+ * breakdown with range filter, and recent transactions.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Registers the service worker (public/sw.js) in production only.
+ * ? - Spending breakdown is computed client-side from useTransactions and filtered by
+ *     rangeStartISO; bar colors use the category color or --primary fallback.
+ * ? - Add-transaction button is a Link to "/transactions?add=1" via the Base UI
+ *     Button render prop with nativeButton={false}.
+ *
+ * AFFECTS:
+ * ? - app/page.tsx (rendered here)
+ * ! - public/sw.js (CRITICAL: this file registers the service worker)
+ *
+ * AFFECTED BY:
+ * ? - lib/hooks/useTransactions.ts (useTransactions, useRecentTransactions, useCategories)
+ * ? - lib/format.ts (formatPeso, rangeStartISO, DateRange)
+ * ? - components/shared/ (Header, BottomNav, CategoryIcon, RangeFilter)
+ * ? - lib/db/schema.ts (Transaction / Category types)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify SW registers only in production; breakdown math and bar widths correct
+ * * - Recent-transactions list must handle an empty DB ("Add your first transaction")
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
