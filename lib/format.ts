@@ -26,6 +26,7 @@
  * ? - Verify PHP peso format (₱, 2 decimals) and en-PH display dates
  * * - toISODate must produce zero-padded values or date-range comparisons break
  */
+
 const phpFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",

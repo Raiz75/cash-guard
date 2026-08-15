@@ -26,6 +26,7 @@
  * ? - Changing a field must be reflected in forms, repository writes, and import parsing
  * * - description max length (200) and amount positivity are user-facing messages — keep them
  */
+
 import { z } from "zod";
 
 export const transactionSchema = z.object({

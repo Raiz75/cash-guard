@@ -32,6 +32,7 @@
  * ? - Verify index fields match the queries in useTransactions.ts
  * * - Adding a required field breaks CSV import, forms, and repository writes — check all
  */
+
 import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
 

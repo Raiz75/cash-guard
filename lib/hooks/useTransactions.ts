@@ -27,6 +27,7 @@
  * ? - Verify query index fields still match schema.ts indexes
  * * - A write introduced here inside useLiveQuery throws ReadonlyError at runtime
  */
+
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";

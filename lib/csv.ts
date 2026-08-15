@@ -24,6 +24,7 @@
  * ? - Verify quoted commas, "" escapes, BOM, and CRLF are handled
  * * - Header names are lowercased/trimmed — a renamed column silently stops importing
  */
+
 export interface CsvRow {
   id?: string;
   date: string;

@@ -20,6 +20,7 @@
  * ? - Verify SSR output renders the neutral placeholder (not sun/moon)
  * * - Do not convert to setState-in-effect — react-hooks/set-state-in-effect rejects it
  */
+
 "use client";
 
 import { useSyncExternalStore } from "react";
