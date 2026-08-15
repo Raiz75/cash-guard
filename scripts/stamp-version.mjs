@@ -5,7 +5,7 @@
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - package.json "version" is the single source of truth; every other version surface derives from it.
- * ? - sw.js VERSION line is matched with an anchored regex (/^const VERSION = [^;]+;/m) so the header comment's identical text is never matched.
+ * ? - sw.js VERSION presence guard AND replace are both anchored to line-start (/^const VERSION = /m and /^const VERSION = [^;]+;/m) so the header comment's identical text is never matched and a missing declaration fails loudly.
  * ? - Fails loudly (non-zero exit) on missing/invalid SemVer so a release never goes out unversioned.
  * ? - Runs only in the production build script; next dev must not stamp.
  * ? - Idempotent: same version produces byte-identical output.
@@ -50,7 +50,7 @@ if (typeof version !== "string" || !semverPattern.test(version)) {
 
 const swPath = join(root, "public", "sw.js");
 let sw = readFileSync(swPath, "utf8");
-if (!/const VERSION = /.test(sw)) {
+if (!/^const VERSION = /m.test(sw)) {
   console.error('[stamp-version] could not find "const VERSION = " in public/sw.js');
   process.exit(1);
 }
