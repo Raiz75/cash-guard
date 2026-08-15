@@ -20,10 +20,9 @@
  * ON FILE EDIT:
  * ! - npm run build
  * ! - npm run lint
- * ? - Bump the CACHE version string when the cache contents change
  * ? - Verify install/activate/fetch handlers still work after edits
  * * - Fetch handler must never cache POST or cross-origin requests
- * * - VERSION must be bumped on each release
+ * * - VERSION must be bumped on each release (the CACHE name derives from it)
  *
  * AI INSTRUCTIONS
  * - When editing this file, ALWAYS check the AFFECTS list first

@@ -6,7 +6,7 @@
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - register("/sw.js") is idempotent — calling it here reuses the registration already created by DashboardView instead of re-registering.
  * ? - A worker in "installed" (waiting) state is the ONLY signal for "available"; the statechange listener keys off worker.state === "installed", reading the worker from event.target (the statechange event's target is the worker).
- * ? - checkForUpdates inspects registration.waiting/installing after update() resolves to distinguish "no update" from "update found".
+ * ? - checkForUpdates keys on registration.waiting only — an installing worker is not yet applyable; the statechange listener flips status to "available" once it reaches installed.
  * ? - controllerchange triggers a full page reload so the new shell activates; user data lives in IndexedDB and survives reloads.
  * ? - All state updates happen in async callbacks/event listeners, never synchronously in the effect body (react-hooks/set-state-in-effect).
  * ? - No-op in dev or when service workers are unsupported, so status stays "up-to-date".
@@ -96,7 +96,7 @@ export function useServiceWorkerUpdate() {
     try {
       const reg = await navigator.serviceWorker.register("/sw.js");
       await reg.update();
-      if (reg.waiting || reg.installing) {
+      if (reg.waiting) {
         setStatus("available");
       } else {
         setStatus("up-to-date");
@@ -110,7 +110,7 @@ export function useServiceWorkerUpdate() {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
     void navigator.serviceWorker.getRegistration().then((reg) => {
       reg?.waiting?.postMessage({ type: "SKIP_WAITING" });
-    });
+    }).catch(() => {});
   };
 
   return { status, checkForUpdates, applyUpdate };
