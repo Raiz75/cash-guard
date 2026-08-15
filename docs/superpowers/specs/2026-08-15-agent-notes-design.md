@@ -23,7 +23,7 @@ All hand-written source files. **Excluded:** `components/ui/*` (shadcn boilerpla
 | `lib/` | `db/schema.ts`, `db/repository.ts`, `hooks/useTransactions.ts`, `hooks/useHydrated.ts`, `validations/transaction.ts`, `format.ts`, `utils.ts`, `csv.ts` |
 | `public/` | `sw.js` |
 
-That is 27 files.
+That is 29 files.
 
 ### 2. Canonical header template
 
