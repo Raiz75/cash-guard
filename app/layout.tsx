@@ -1,18 +1,15 @@
 /**
  * FILE NAME: layout.tsx
  *
- * ROLE: Root layout — loads fonts, sets metadata/viewport/manifest, and wraps every
- * route in the ThemeProvider and Toaster.
+ * ROLE: Root layout — loads fonts, sets metadata/viewport/manifest, and wraps every route in the ThemeProvider and Toaster.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Fonts (Roboto/Inter/Geist) are loaded via next/font and exposed as CSS variables
- *     consumed by globals.css.
+ * ? - Fonts (Roboto/Inter/Geist) are loaded via next/font and exposed as CSS variables consumed by globals.css.
  * ? - suppressHydrationWarning is required on <html> because next-themes swaps classes.
  * ? - app is client-driven (force-dynamic pages); this layout is the server shell.
  *
  * AFFECTS:
- * ! - Every route: app/page.tsx, app/transactions/page.tsx, app/settings/page.tsx
- *     (CRITICAL: removing ThemeProvider or Toaster breaks theming/toasts app-wide)
+ * ! - Every route: app/page.tsx, app/transactions/page.tsx, app/settings/page.tsx (CRITICAL: removing ThemeProvider or Toaster breaks theming/toasts app-wide)
  * ? - app/globals.css (font variables --font-sans / --font-geist-mono / --font-heading)
  *
  * AFFECTED BY:
@@ -31,8 +28,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

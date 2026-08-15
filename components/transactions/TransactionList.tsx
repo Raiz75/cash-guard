@@ -1,12 +1,10 @@
 /**
  * FILE NAME: TransactionList.tsx
  *
- * ROLE: Renders a transaction list; each row shows an income/expense indicator, amount,
- * and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.
+ * ROLE: Renders a transaction list; each row shows an income/expense indicator, amount, and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead
- *     of text badges.
+ * ? - Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead of text badges.
  * ? - Income rows use text-primary (teal) and "+"; expense rows use text-destructive and "-".
  *
  * AFFECTS:
@@ -27,8 +25,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

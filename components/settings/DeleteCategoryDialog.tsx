@@ -1,12 +1,10 @@
 /**
  * FILE NAME: DeleteCategoryDialog.tsx
  *
- * ROLE: Confirmation dialog for deleting a category; when transactions use it, requires
- * selecting a same-type category to reassign them first.
+ * ROLE: Confirmation dialog for deleting a category; when transactions use it, requires selecting a same-type category to reassign them first.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - If the category is in use (count > 0), delete is disabled until a reassign target
- *     is chosen; reassignCategory moves transactions before deleting.
+ * ? - If the category is in use (count > 0), delete is disabled until a reassign target is chosen; reassignCategory moves transactions before deleting.
  *
  * AFFECTS:
  * ? - components/settings/SettingsView.tsx (opened from the category list)
@@ -26,8 +24,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

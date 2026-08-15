@@ -1,12 +1,10 @@
 /**
  * FILE NAME: CategoryIcon.tsx
  *
- * ROLE: Resolves a stored category icon-name string to a Tabler icon component,
- * falling back to IconTag for unknown names.
+ * ROLE: Resolves a stored category icon-name string to a Tabler icon component, falling back to IconTag for unknown names.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - The map is the ONLY place icon names are turned into components; unknown names
- *     silently fall back to IconTag so old data never crashes.
+ * ? - The map is the ONLY place icon names are turned into components; unknown names silently fall back to IconTag so old data never crashes.
  * ? - Tabler icons (@tabler/icons-react), per the base-maia preset convention.
  *
  * AFFECTS:
@@ -29,8 +27,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

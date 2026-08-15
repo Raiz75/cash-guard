@@ -1,14 +1,11 @@
 /**
  * FILE NAME: transaction.ts
  *
- * ROLE: Zod schemas (transactionSchema, categorySchema) and their inferred input
- * types used by every form and by CSV import validation.
+ * ROLE: Zod schemas (transactionSchema, categorySchema) and their inferred input types used by every form and by CSV import validation.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - transactionSchema coerces amount to a positive number and allows an optional id,
- *     so the same schema validates both forms and imported CSV rows.
- * ? - TransactionInput / CategoryInput are inferred (z.infer) so validation and types
- *     can never drift apart.
+ * ? - transactionSchema coerces amount to a positive number and allows an optional id, so the same schema validates both forms and imported CSV rows.
+ * ? - TransactionInput / CategoryInput are inferred (z.infer) so validation and types can never drift apart.
  *
  * AFFECTS:
  * ! - components/transactions/TransactionForm.tsx (CRITICAL: resolver + TransactionInput)
@@ -30,8 +27,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

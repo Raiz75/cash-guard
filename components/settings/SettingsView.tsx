@@ -4,12 +4,9 @@
  * ROLE: Settings page — add/edit/delete categories, export CSV, and import CSV.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Add-category uses React Hook Form + categorySchema; type toggle drives a hidden
- *     form field.
- * ? - Edit/delete gates are async: transactionCountForCategory decides whether the
- *     category is in use before opening the respective dialog.
- * ? - Export builds the CSV inline (with an # Exported timestamp) and downloads via
- *     downloadFile with a date-stamped filename.
+ * ? - Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field.
+ * ? - Edit/delete gates are async: transactionCountForCategory decides whether the category is in use before opening the respective dialog.
+ * ? - Export builds the CSV inline (with an # Exported timestamp) and downloads via downloadFile with a date-stamped filename.
  * ? - Import reads the file, parses via parseTransactionsCSV, then importTransactions.
  *
  * AFFECTS:
@@ -35,8 +32,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

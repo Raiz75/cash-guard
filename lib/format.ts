@@ -1,8 +1,7 @@
 /**
  * FILE NAME: format.ts
  *
- * ROLE: Pure formatting/date helpers — PHP currency formatting, ISO date helpers,
- * quick date-range math, and a browser downloadFile() utility.
+ * ROLE: Pure formatting/date helpers — PHP currency formatting, ISO date helpers, quick date-range math, and a browser downloadFile() utility.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Currency uses Intl.NumberFormat with en-PH / PHP and fixed 2 decimals.
@@ -30,8 +29,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

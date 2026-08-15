@@ -4,8 +4,7 @@
  * ROLE: Dialog wrapper for TransactionForm, used for both add and edit modes.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Pure presentation: open/onOpenChange/title/id/initial are passed through; the form
- *     closes the dialog via onDone → onOpenChange(false).
+ * ? - Pure presentation: open/onOpenChange/title/id/initial are passed through; the form closes the dialog via onDone → onOpenChange(false).
  *
  * AFFECTS:
  * ? - components/transactions/TransactionsView.tsx (renders it twice: add + edit)
@@ -24,8 +23,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

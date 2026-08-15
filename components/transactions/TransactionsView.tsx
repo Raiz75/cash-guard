@@ -1,12 +1,10 @@
 /**
  * FILE NAME: TransactionsView.tsx
  *
- * ROLE: Transactions page orchestrator — filter state, list, add/edit/delete dialogs,
- * and the ?add=1 deep-link handling.
+ * ROLE: Transactions page orchestrator — filter state, list, add/edit/delete dialogs, and the ?add=1 deep-link handling.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - add/edit/deleting are controlled by component state; ?add=1 in the URL opens the
- *     add dialog and closing it router.push("/transactions").
+ * ? - add/edit/deleting are controlled by component state; ?add=1 in the URL opens the add dialog and closing it router.push("/transactions").
  * ? - dialogKey + editing.id drive React keys so each dialog instance resets cleanly.
  * ? - Filtering is memoized via applyFilters (from TransactionFilters).
  *
@@ -30,8 +28,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

@@ -1,18 +1,15 @@
 /**
  * FILE NAME: globals.css
  *
- * ROLE: Global styles — Tailwind v4 entry, the maia theme token mapping (@theme inline),
- * light/dark CSS variables, and base-layer element styles.
+ * ROLE: Global styles — Tailwind v4 entry, the maia theme token mapping (@theme inline), light/dark CSS variables, and base-layer element styles.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Tailwind v4 style config: @theme inline maps semantic utility names to CSS vars.
- * ? - --primary is teal (income/positive) and --destructive is red (expense/negative);
- *     semantic tokens only — no hardcoded green/red utilities.
+ * ? - --primary is teal (income/positive) and --destructive is red (expense/negative); semantic tokens only — no hardcoded green/red utilities.
  * ? - Dark mode via the `.dark` class (set by next-themes attribute="class").
  *
  * AFFECTS:
- * ! - Every component using semantic tokens (--primary, --destructive, --muted, etc.)
- *     (CRITICAL: changing a token re-themes the whole app)
+ * ! - Every component using semantic tokens (--primary, --destructive, --muted, etc.) (CRITICAL: changing a token re-themes the whole app)
  * ? - components/theme-provider.tsx + app/layout.tsx (the .dark class + font variables)
  *
  * AFFECTED BY:
@@ -30,8 +27,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

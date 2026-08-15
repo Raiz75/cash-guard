@@ -1,18 +1,15 @@
 /**
  * FILE NAME: TransactionFilters.tsx
  *
- * ROLE: Search input + collapsible filter panel (range, type, category). Exports the
- * Filters interface and the pure applyFilters() predicate used by TransactionsView.
+ * ROLE: Search input + collapsible filter panel (range, type, category). Exports the Filters interface and the pure applyFilters() predicate used by TransactionsView.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Search stays visible; the IconFilter button toggles the panel. Button is "default"
- *     when the panel is open OR any filter differs from its default.
+ * ? - Search stays visible; the IconFilter button toggles the panel. Button is "default" when the panel is open OR any filter differs from its default.
  * ? - applyFilters is exported and kept pure so filtering is testable and memoizable.
  * ? - Category options render via CategoryIcon; type uses "all" | TransactionType.
  *
  * AFFECTS:
- * ! - components/transactions/TransactionsView.tsx (CRITICAL: consumes Filters and
- *     applyFilters — renaming fields or changing semantics breaks filtering)
+ * ! - components/transactions/TransactionsView.tsx (CRITICAL: consumes Filters and applyFilters — renaming fields or changing semantics breaks filtering)
  *
  * AFFECTED BY:
  * ? - lib/hooks/useTransactions.ts (useCategories)
@@ -30,8 +27,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable

@@ -1,13 +1,11 @@
 /**
  * FILE NAME: sw.js
  *
- * ROLE: PWA service worker — caches the app shell on install, serves cached-first with
- * network fallback, and cleans up old cache versions on activate.
+ * ROLE: PWA service worker — caches the app shell on install, serves cached-first with network fallback, and cleans up old cache versions on activate.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Cache-first for same-origin GET requests; cross-origin and non-GET are ignored.
- * ? - The CACHE name encodes a version ("cash-guard-v2"); bump it whenever the shell
- *     changes so activate() evicts stale caches.
+ * ? - The CACHE name encodes a version ("cash-guard-v2"); bump it whenever the shell changes so activate() evicts stale caches.
  * ? - Offline navigation falls back to the cached "/" (the app shell).
  *
  * AFFECTS:
@@ -29,8 +27,8 @@
  * - When editing this file, ALWAYS check the AFFECTS list first
  * - After changes, run ALL tests listed under ON FILE EDIT
  * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE,
- *   decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
+ * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
  * - Red (!) items are CRITICAL and cannot be skipped
  * - Blue (?) items are important but not blocking
  * - Green (*) items are nice-to-have; skip if not applicable
