@@ -1,19 +1,21 @@
 /**
  * FILE NAME: SettingsView.tsx
  *
- * ROLE: Settings page — add/edit/delete categories, export CSV, and import CSV.
+ * ROLE: Settings page — add/edit/delete categories, export CSV, import CSV, and an Update card with a new-version check + restart dialog.
  *
  * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
  * ? - Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field.
  * ? - Edit/delete gates are async: transactionCountForCategory decides whether the category is in use before opening the respective dialog.
  * ? - Export builds the CSV inline (with an # Exported timestamp) and downloads via downloadFile with a date-stamped filename.
  * ? - Import reads the file, parses via parseTransactionsCSV, then importTransactions.
+ * ? - Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads.
  *
  * AFFECTS:
  * ! - app/settings/page.tsx (CRITICAL: rendered by the route)
  * ? - components/settings/CategoryEditDialog.tsx and DeleteCategoryDialog.tsx (opened here)
  *
  * AFFECTED BY:
+ * ? - lib/hooks/useServiceWorkerUpdate.ts (update status/actions)
  * ? - lib/hooks/useTransactions.ts (useCategories)
  * ? - lib/csv.ts (parseTransactionsCSV)
  * ? - lib/db/repository.ts (addCategory, exportData, importTransactions, transactionCountForCategory)
@@ -26,6 +28,7 @@
  * ! - npm run build
  * ! - npm run lint
  * ? - Verify add/rename/delete category flows and CSV import/export round-trip
+ * ? - Verify update flow: dot/banner states (checking -> up-to-date/available), Restart dialog confirm + cancel paths
  * * - Import must handle empty/invalid CSVs with a toast, not a crash
  *
  * AI INSTRUCTIONS
@@ -60,7 +63,19 @@ import {
   categorySchema,
   type CategoryInput,
 } from "@/lib/validations/transaction";
-import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconRefresh, IconDownload } from "@tabler/icons-react";
+import { useServiceWorkerUpdate } from "@/lib/hooks/useServiceWorkerUpdate";
+import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CategoryEditDialog } from "@/components/settings/CategoryEditDialog";
 import { DeleteCategoryDialog } from "@/components/settings/DeleteCategoryDialog";
 import type { Category } from "@/lib/db/schema";
@@ -76,6 +91,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export function SettingsView() {
   const categories = useCategories() ?? [];
   const [type, setType] = useState<"income" | "expense">("expense");
+  const { status, checkForUpdates, applyUpdate } = useServiceWorkerUpdate();
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
 
   const form = useForm<CategoryInput>({
     resolver: zodResolver(categorySchema),
@@ -276,6 +293,42 @@ export function SettingsView() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Update</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full",
+                  status === "available" ? "bg-primary" : "bg-muted"
+                )}
+              />
+              <span className="text-muted-foreground">
+                {status === "checking"
+                  ? "Checking for updates…"
+                  : status === "available"
+                    ? "New version available"
+                    : "You're up to date"}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={status === "checking"}
+              onClick={() => void checkForUpdates()}
+            >
+              <IconRefresh className="mr-1 h-4 w-4" /> Check for updates
+            </Button>
+            {status === "available" ? (
+              <Button className="w-full" onClick={() => setUpdateDialogOpen(true)}>
+                <IconDownload className="mr-1 h-4 w-4" /> Restart app
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+
         <p className="pt-4 text-center text-xs text-muted-foreground">
           Created by Neziar
         </p>
@@ -306,6 +359,30 @@ export function SettingsView() {
           }}
         />
       ) : null}
+
+      <AlertDialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>New version ready</AlertDialogTitle>
+            <AlertDialogDescription>
+              Restart now to apply the update?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUpdateDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setUpdateDialogOpen(false);
+                applyUpdate();
+              }}
+            >
+              Restart
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
