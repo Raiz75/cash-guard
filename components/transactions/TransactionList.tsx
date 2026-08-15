@@ -2,7 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { formatPeso, formatDisplayDate } from "@/lib/format";
-import { Badge } from "@/components/ui/badge";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/lib/db/schema";
 
 export function TransactionItem({
@@ -33,21 +34,30 @@ export function TransactionItem({
           </p>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1">
         <span className={`text-sm font-semibold ${income ? "text-primary" : "text-destructive"}`}>
           {income ? "+" : "-"}
           {formatPeso(tx.amount)}
         </span>
-        <Badge
-          variant="outline"
-          className="cursor-pointer text-xs"
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
           onClick={() => onEdit(tx)}
+          aria-label={`Edit ${tx.description || tx.category}`}
         >
-          Edit
-        </Badge>
-        <Badge variant="destructive" className="cursor-pointer text-xs" onClick={() => onDelete(tx)}>
-          Del
-        </Badge>
+          <IconPencil className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className="text-destructive hover:text-destructive"
+          onClick={() => onDelete(tx)}
+          aria-label={`Delete ${tx.description || tx.category}`}
+        >
+          <IconTrash className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </div>
   );
