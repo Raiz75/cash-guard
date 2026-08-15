@@ -1,3 +1,31 @@
+/**
+ * FILE NAME: format.ts
+ *
+ * ROLE: Pure formatting/date helpers — PHP currency formatting, ISO date helpers,
+ * quick date-range math, and a browser downloadFile() utility.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Currency uses Intl.NumberFormat with en-PH / PHP and fixed 2 decimals.
+ * ? - All dates are ISO strings (YYYY-MM-DD) so lexicographic comparison works for ranges.
+ * ? - rangeStartISO maps DateRange ("all" | "today" | "7d" | "1m") to a start date; "all" → null.
+ *
+ * AFFECTS:
+ * ? - components/transactions/TransactionList.tsx (formatPeso, formatDisplayDate)
+ * ? - components/dashboard/DashboardView.tsx (formatPeso, rangeStartISO, DateRange)
+ * ? - components/settings/SettingsView.tsx (downloadFile, todayISO)
+ * ? - components/transactions/TransactionForm.tsx (todayISO)
+ * ? - components/transactions/TransactionFilters.tsx (rangeStartISO, DateRange)
+ * ? - components/shared/RangeFilter.tsx (DateRange type)
+ *
+ * AFFECTED BY:
+ * ? - Browser Intl support / locale data for en-PH
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify PHP peso format (₱, 2 decimals) and en-PH display dates
+ * * - toISODate must produce zero-padded values or date-range comparisons break
+ */
 const phpFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",

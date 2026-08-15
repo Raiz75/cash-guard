@@ -1,3 +1,29 @@
+/**
+ * FILE NAME: csv.ts
+ *
+ * ROLE: Parses an uploaded CSV of transactions into CsvRow[] (with quoted-field
+ * handling, BOM stripping, and header-column mapping) for the import flow.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Hand-rolled parser (no dependency): handles quoted fields with "" escapes,
+ *     skips blank lines and # comment lines, strips a leading BOM.
+ * ? - Unknown/missing rows are skipped by importTransactions; missing required columns
+ *     return an error string instead.
+ *
+ * AFFECTS:
+ * ! - components/settings/SettingsView.tsx (CRITICAL: CSV import calls parseTransactionsCSV)
+ * ? - lib/db/repository.ts (consumes CsvRow via importTransactions)
+ *
+ * AFFECTED BY:
+ * ? - lib/db/schema.ts (row shape must map to Transaction)
+ * ? - lib/validations/transaction.ts (rows are validated after parsing)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify quoted commas, "" escapes, BOM, and CRLF are handled
+ * * - Header names are lowercased/trimmed — a renamed column silently stops importing
+ */
 export interface CsvRow {
   id?: string;
   date: string;

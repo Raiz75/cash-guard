@@ -1,3 +1,31 @@
+/**
+ * FILE NAME: transaction.ts
+ *
+ * ROLE: Zod schemas (transactionSchema, categorySchema) and their inferred input
+ * types used by every form and by CSV import validation.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - transactionSchema coerces amount to a positive number and allows an optional id,
+ *     so the same schema validates both forms and imported CSV rows.
+ * ? - TransactionInput / CategoryInput are inferred (z.infer) so validation and types
+ *     can never drift apart.
+ *
+ * AFFECTS:
+ * ! - components/transactions/TransactionForm.tsx (CRITICAL: resolver + TransactionInput)
+ * ! - lib/db/repository.ts (CRITICAL: safeParse gates every imported row)
+ * ? - components/settings/SettingsView.tsx (categorySchema + CategoryInput)
+ * ? - components/settings/CategoryEditDialog.tsx (categorySchema)
+ *
+ * AFFECTED BY:
+ * ? - zod version
+ * ? - lib/db/schema.ts (field shapes should mirror these)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Changing a field must be reflected in forms, repository writes, and import parsing
+ * * - description max length (200) and amount positivity are user-facing messages — keep them
+ */
 import { z } from "zod";
 
 export const transactionSchema = z.object({
