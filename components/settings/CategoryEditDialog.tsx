@@ -1,3 +1,29 @@
+/**
+ * FILE NAME: CategoryEditDialog.tsx
+ *
+ * ROLE: Dialog to rename a category and optionally change its type; type is locked when
+ * the category is in use.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Renaming relies on updateCategory's cascade (transactions follow the new name).
+ * ? - useWatch (not form.watch) reads the type for the income/expense buttons.
+ *
+ * AFFECTS:
+ * ? - components/settings/SettingsView.tsx (opened from the category list)
+ *
+ * AFFECTED BY:
+ * ? - lib/db/repository.ts (updateCategory)
+ * ? - lib/validations/transaction.ts (categorySchema, CategoryInput)
+ * ? - lib/db/schema.ts (Category type)
+ * ? - components/ui/dialog.tsx, components/ui/button.tsx, components/ui/input.tsx
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify rename cascades to transactions and type buttons are disabled when in use
+ * * - updateCategory errors (e.g. "Category not found") must surface via toast
+ */
+
 "use client";
 
 import { useForm, useWatch } from "react-hook-form";
