@@ -1,3 +1,32 @@
+/**
+ * FILE NAME: globals.css
+ *
+ * ROLE: Global styles — Tailwind v4 entry, the maia theme token mapping (@theme inline),
+ * light/dark CSS variables, and base-layer element styles.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Tailwind v4 style config: @theme inline maps semantic utility names to CSS vars.
+ * ? - --primary is teal (income/positive) and --destructive is red (expense/negative);
+ *     semantic tokens only — no hardcoded green/red utilities.
+ * ? - Dark mode via the `.dark` class (set by next-themes attribute="class").
+ *
+ * AFFECTS:
+ * ! - Every component using semantic tokens (--primary, --destructive, --muted, etc.)
+ *     (CRITICAL: changing a token re-themes the whole app)
+ * ? - components/theme-provider.tsx + app/layout.tsx (the .dark class + font variables)
+ *
+ * AFFECTED BY:
+ * ? - components.json (shadcn "base-maia" preset this file was generated from)
+ * ? - Tailwind CSS / tw-animate-css versions
+ * ? - Font variables defined in app/layout.tsx
+ *
+ * ON FILE EDIT:
+ * ! - npm run build (Tailwind compiles this)
+ * ! - npm run lint
+ * ? - Verify light AND dark contrast; income=teal primary, expense=destructive
+ * * - Keep the header above the @import lines (CSS comments before @import are valid)
+ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

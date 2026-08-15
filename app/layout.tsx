@@ -1,3 +1,33 @@
+/**
+ * FILE NAME: layout.tsx
+ *
+ * ROLE: Root layout — loads fonts, sets metadata/viewport/manifest, and wraps every
+ * route in the ThemeProvider and Toaster.
+ *
+ * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
+ * ? - Fonts (Roboto/Inter/Geist) are loaded via next/font and exposed as CSS variables
+ *     consumed by globals.css.
+ * ? - suppressHydrationWarning is required on <html> because next-themes swaps classes.
+ * ? - app is client-driven (force-dynamic pages); this layout is the server shell.
+ *
+ * AFFECTS:
+ * ! - Every route: app/page.tsx, app/transactions/page.tsx, app/settings/page.tsx
+ *     (CRITICAL: removing ThemeProvider or Toaster breaks theming/toasts app-wide)
+ * ? - app/globals.css (font variables --font-sans / --font-geist-mono / --font-heading)
+ *
+ * AFFECTED BY:
+ * ? - components/theme-provider.tsx (theme behavior)
+ * ? - components/ui/sonner.tsx (Toaster)
+ * ? - lib/utils.ts (cn for the <html> className)
+ * ? - next.config.ts / tsconfig.json (next/font resolution, path alias)
+ *
+ * ON FILE EDIT:
+ * ! - npm run build
+ * ! - npm run lint
+ * ? - Verify manifest, appleWebApp, and viewport (themeColor) still set
+ * ? - Verify no hydration mismatch warnings (suppressHydrationWarning stays)
+ */
+
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter, Roboto } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
