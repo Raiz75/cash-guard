@@ -58,11 +58,22 @@ Cash Guard is a PWA — "download" means **install it to the home screen**:
 - **Forms:** React Hook Form + Zod (`lib/validations/transaction.ts`). Use `useWatch` (memo-safe) instead of `form.watch` in render to keep React Compiler lint clean.
 - **Pages:** dashboard (`/`), transactions (`/transactions`), settings (`/settings`) are `force-dynamic` client views. Shared shell: `Header`, `BottomNav`, centered `max-w-md` column with `pb-20` so content clears the fixed bottom nav.
 
+## Testing
+
+The app uses **Vitest** (the JS/TS equivalent of `php artisan test`) with `happy-dom` as the test environment and `@testing-library` available for DOM assertions.
+
+- **Run the suite:** `npm test` (`npm test -- --watch` for interactive watch mode).
+- **Where tests live:** colocated in the repo-root `tests/` folder, one `*.test.ts` file per module (e.g. `tests/repository.test.ts`, `tests/format.test.ts`, `tests/csv.test.ts`, `tests/transaction.test.ts`).
+- **Config:** `vitest.config.mts` (ESM), `vitest.setup.ts` registers jest-dom matchers. The `@/*` tsconfig alias works inside tests.
+- **Mocking Dexie:** tests of `lib/db/repository.ts` swap the real Dexie `db` for an in-memory mock via `vi.hoisted` + `vi.mock("@/lib/db/schema", ...)` so no IndexedDB is required. Pure-logic modules (`lib/format.ts`, `lib/csv.ts`, `lib/validations/transaction.ts`) are tested directly.
+- **Convention (required on every feature):** when adding or changing a feature, add a `tests/<module>.test.ts` (or extend an existing one) with **multiple test cases** — at minimum the happy path, the expected failure/validation-rejection case, and the relevant edge case — so regressions are caught.
+
 ## Verification
 
 ```bash
 npm run build   # must pass TypeScript + production build
 npm run lint    # must be clean
+npm test        # must pass — run the Vitest suite
 ```
 
 Always run both after changes and confirm output before claiming success.

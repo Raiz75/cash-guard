@@ -1,0 +1,2 @@
+/* AI-CONTEXT-NOTE:{"R":"Test setup — imports jest-dom matchers so expect(...).toBeInTheDocument() works in vitest.","IDD":[{"?":"jest-dom provides DOM assertions; imported once for the whole suite"}],"A":[{"?":"vitest.config.ts","referenced as a setup file"}],"AB":[{"?":"@testing-library/jest-dom","provides the matchers"}],"E":[{"!!":"npm test","setup runs before each test file"}]} */
+import "@testing-library/jest-dom";
