@@ -66,51 +66,34 @@ npm run lint    # must be clean
 ```
 
 Always run both after changes and confirm output before claiming success.
-## Agent notes (required on every hand-written source file)
 
-Every hand-written source file (app routes, `components/` outside `components/ui/`, `lib/`, `public/sw.js`) MUST begin with the agent-notes header below. **Excluded:** `components/ui/*` boilerplate, config files, docs, README. Every new file created in this project must include this header at the top, filled in with real per-file analysis — omit sections that don't apply, never leave the `? -` placeholders.
+## File Convention: AI-CONTEXT-NOTE (required on every code file)
 
-**Keep headers current:** whenever a file is edited, update its header (ROLE, decisions, AFFECTS, AFFECTED BY, ON FILE EDIT) so the notes always match the code. Never leave a stale header behind.
+Every code file (app routes, `components/` outside `components/ui/`, `lib/`, `scripts/`, `public/sw.js`) MUST begin with a token-efficient `AI-CONTEXT-NOTE` JSON header as the **first line** of the file. **Excluded:** `components/ui/*` boilerplate, config files, lockfiles, binary files, minified files, generated build artifacts, docs, README.
 
-```ts
-/**
- * FILE NAME: <file name with extension>
- *
- * ROLE: <one sentence describing what this file does>
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - <key architectural decision 1>
- * ? - <key architectural decision 2>
- * ? - <why a certain approach was chosen>
- * ? - <trade-offs made>
- *
- * AFFECTS:
- * ! - <critical file that depends on this> (CRITICAL: <what breaks>)
- * ? - <secondary file> (<how it's affected>)
- * ? - <tertiary file> (<how it's affected>)
- * ? - <additional file> (<how it's affected>)
- *
- * AFFECTED BY:
- * ? - <config/ENV file> (<what changes impact this>)
- * ? - <another file/dependency> (<what changes impact this>)
- *
- * ON FILE EDIT:
- * ! - <critical test that MUST run>
- * ? - <what files/configs need updating>
- * ? - <what behavior to verify>
- * * - <what edge cases to double-check>
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+The JSON MUST be a single line with NO line breaks and NO spaces (no space after `:`, `,`, `{`, or `}` — only spaces inside string values). Severity markers: `!` = important, `!!` = high, `!!!` = highest (most critical).
+
+Schema (wrap in the language's comment syntax — `/* ... */` for TS/TSX/CSS, `//` for .mjs, etc.):
+
+```json
+/* AI-CONTEXT-NOTE:{"R":"One sentence describing what this file does.","IDD":[{"?":"Key architectural decision 1"},{"?":"Key architectural decision 2"},{"?":"Why a certain approach was chosen"},{"?":"Trade-offs made"}],"A":[{"!!!":"Most critical file that depends on this","CRITICAL":"What breaks if this file changes"},{"!!":"High-priority file","How it's affected"},{"!":"Important file","How it's affected"},{"?":"Secondary file","How it's affected"}],"AB":[{"?":"Config/ENV file","What changes to it impact this file"},{"?":"Another file/dependency","What changes impact this file"}],"E":[{"!!!":"Most critical test that MUST run first"},{"!!":"High-priority check/test"},{"!":"Important test to run"},{"?":"What behavior to verify"},{"*":"What edge cases to double-check"}]} */
 ```
+
+Key map:
+
+- `R` — ROLE: one sentence describing what this file does.
+- `IDD` — IMPORTANT DEVELOPER DECISIONS: key architectural decisions, why chosen, trade-offs.
+- `A` — AFFECTS: critical/high/important/secondary files that depend on this.
+- `AB` — AFFECTED BY: config/ENV files and dependencies that impact this file.
+- `E` — ON FILE EDIT: tests/checks/behaviors/edge cases to verify when editing.
+- `CRITICAL` — what breaks if an `A` entry changes.
+
+Editing rules:
+
+- **Keep headers current:** whenever a file is edited, update `R` if the purpose changed, `A`/`AB` if dependencies changed, and `E` with the actual checks — so the notes always match the code. Never leave a stale header behind.
+- **Never delete an existing `AI-CONTEXT-NOTE`** when editing a file.
+- **Never leave placeholders** (`[INSERT]`, empty values) — fill in real per-file analysis; omit sections that don't apply.
+- Red (`!`/`!!`/`!!!`) items are CRITICAL and cannot be skipped; blue (`?`) items are important but not blocking; green (`*`) items are nice-to-have.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

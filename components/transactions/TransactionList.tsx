@@ -1,36 +1,4 @@
-/**
- * FILE NAME: TransactionList.tsx
- *
- * ROLE: Renders a transaction list; each row shows an income/expense indicator, amount, and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead of text badges.
- * ? - Income rows use text-primary (teal) and "+"; expense rows use text-destructive and "-".
- *
- * AFFECTS:
- * ? - components/transactions/TransactionsView.tsx (renders TransactionList)
- *
- * AFFECTED BY:
- * ? - lib/db/schema.ts (Transaction type)
- * ? - lib/format.ts (formatPeso, formatDisplayDate)
- * ? - lib/utils.ts (cn for row styling)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify aria-labels, empty state text, and +/- amount signs
- * * - Long descriptions must truncate without breaking layout
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Renders a transaction list; each row shows an income/expense indicator, amount, and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.","IDD":[{"?":"Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead of text badges"},{"?":"Income rows use text-primary (teal) and '+'; expense rows use text-destructive and '-'"}],"A":[{"?":"components/transactions/TransactionsView.tsx","renders TransactionList"}],"AB":[{"?":"lib/db/schema.ts","Transaction type"},{"?":"lib/format.ts","formatPeso, formatDisplayDate"},{"?":"lib/utils.ts","cn for row styling"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify aria-labels, empty state text, and +/- amount signs"},{"*":"Long descriptions must truncate without breaking layout"}]} */
 
 "use client";
 

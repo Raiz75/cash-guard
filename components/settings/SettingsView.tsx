@@ -1,48 +1,4 @@
-/**
- * FILE NAME: SettingsView.tsx
- *
- * ROLE: Settings page — add/edit/delete categories, export CSV, import CSV, and an Update card with a new-version check + restart dialog plus a current app-version line.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field.
- * ? - Edit/delete gates are async: transactionCountForCategory decides whether the category is in use before opening the respective dialog.
- * ? - Export builds the CSV inline (with an # Exported timestamp) and downloads via downloadFile with a date-stamped filename.
- * ? - Import reads the file, parses via parseTransactionsCSV, then importTransactions.
- * ? - Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads.
- * ? - Update card shows the current app version (APP_VERSION from the generated lib/version.ts) in muted small text beneath the buttons.
- *
- * AFFECTS:
- * ! - app/settings/page.tsx (CRITICAL: rendered by the route)
- * ? - components/settings/CategoryEditDialog.tsx and DeleteCategoryDialog.tsx (opened here)
- *
- * AFFECTED BY:
- * ? - lib/hooks/useServiceWorkerUpdate.ts (update status/actions)
- * ? - lib/version.ts (generated APP_VERSION constant shown in the Update card)
- * ? - lib/hooks/useTransactions.ts (useCategories)
- * ? - lib/csv.ts (parseTransactionsCSV)
- * ? - lib/db/repository.ts (addCategory, exportData, importTransactions, transactionCountForCategory)
- * ? - lib/format.ts (downloadFile, todayISO)
- * ? - lib/validations/transaction.ts (categorySchema, CategoryInput)
- * ? - lib/db/schema.ts (Category type)
- * ? - components/shared/ (Header, BottomNav, CategoryIcon)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify add/rename/delete category flows and CSV import/export round-trip
- * ? - Verify update flow: dot/banner states (checking -> up-to-date/available), Restart dialog confirm + cancel paths
- * * - Import must handle empty/invalid CSVs with a toast, not a crash
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Settings page for category add/edit/delete, CSV export/import, update check with restart dialog and current app version.","IDD":[{"?":"Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field"},{"?":"Edit/delete gates are async: transactionCountForCategory decides if a category is in use before opening its dialog"},{"?":"Export builds CSV inline (with # Exported timestamp) and downloads via downloadFile with a date-stamped filename"},{"?":"Import parses via parseTransactionsCSV then importTransactions"},{"?":"Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads"},{"?":"Shows current app version (APP_VERSION from generated lib/version.ts)"}],"A":[{"!!!":"app/settings/page.tsx","CRITICAL":"rendered by the route"},{"?":"CategoryEditDialog and DeleteCategoryDialog","opened from the category list"}],"AB":[{"?":"lib/hooks/useServiceWorkerUpdate.ts","update status/actions"},{"?":"lib/version.ts","generated APP_VERSION constant shown in Update card"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/csv.ts","parseTransactionsCSV"},{"?":"lib/db/repository.ts","addCategory, exportData, importTransactions, transactionCountForCategory"},{"?":"lib/format.ts","downloadFile, todayISO"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/schema.ts","Category type"},{"?":"components/shared (Header, BottomNav, CategoryIcon)","shared layout and icon components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify add/rename/delete category flows and CSV import/export round-trip"},{"?":"Verify update flow: dot/banner states, Restart dialog confirm + cancel paths"},{"*":"Import must handle empty/invalid CSVs with a toast, not a crash"}]} */
 
 "use client";
 

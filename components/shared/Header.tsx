@@ -1,36 +1,4 @@
-/**
- * FILE NAME: Header.tsx
- *
- * ROLE: Sticky top bar with title/subtitle and a hydrated theme toggle (dark/light).
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Uses useHydrated() to gate the icon render — avoids hydration mismatch for the resolvedTheme-dependent toggle.
- * ? - lucide Moon/Sun icons; semantic tokens (bg-background/80 backdrop-blur) per theme.
- *
- * AFFECTS:
- * ! - components/dashboard/DashboardView.tsx, components/transactions/TransactionsView.tsx, components/settings/SettingsView.tsx (CRITICAL: all three pages render Header)
- *
- * AFFECTED BY:
- * ? - lib/hooks/useHydrated.ts (hydration gating)
- * ? - next-themes (resolvedTheme/setTheme)
- * ? - components/ui/button.tsx (variant="ghost" size="icon")
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify no hydration mismatch and the toggle flips correctly
- * * - title/subtitle props must stay optional-safe for SettingsView (subtitle omitted)
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Sticky top bar with title/subtitle and a hydrated theme toggle (dark/light).","IDD":[{"?":"UseHydrated() gates the icon render to avoid hydration mismatch for the resolvedTheme-dependent toggle"},{"?":"lucide Moon/Sun icons with semantic tokens (bg-background/80 backdrop-blur) per theme"}],"A":[{"!!!":"components/dashboard/DashboardView.tsx, components/transactions/TransactionsView.tsx, components/settings/SettingsView.tsx","CRITICAL":"all three pages render Header"}],"AB":[{"?":"lib/hooks/useHydrated.ts","hydration gating"},{"?":"next-themes","resolvedTheme/setTheme"},{"?":"components/ui/button.tsx","variant=ghost size=icon"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify no hydration mismatch and the toggle flips correctly"},{"*":"title/subtitle props must stay optional-safe for SettingsView (subtitle omitted)"}]} */
 
 "use client";
 

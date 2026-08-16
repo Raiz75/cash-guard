@@ -1,36 +1,4 @@
-/**
- * FILE NAME: csv.ts
- *
- * ROLE: Parses an uploaded CSV of transactions into CsvRow[] (with quoted-field handling, BOM stripping, and header-column mapping) for the import flow.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Hand-rolled parser (no dependency): handles quoted fields with "" escapes, skips blank lines and # comment lines, strips a leading BOM.
- * ? - Unknown/missing rows are skipped by importTransactions; missing required columns return an error string instead.
- *
- * AFFECTS:
- * ! - components/settings/SettingsView.tsx (CRITICAL: CSV import calls parseTransactionsCSV)
- * ? - lib/db/repository.ts (consumes CsvRow via importTransactions)
- *
- * AFFECTED BY:
- * ? - lib/db/schema.ts (row shape must map to Transaction)
- * ? - lib/validations/transaction.ts (rows are validated after parsing)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify quoted commas, "" escapes, BOM, and CRLF are handled
- * * - Header names are lowercased/trimmed — a renamed column silently stops importing
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Parses an uploaded CSV of transactions into CsvRow[] (with quoted-field handling, BOM stripping, and header-column mapping) for the import flow.","IDD":[{"?":"Hand-rolled parser (no dependency): handles quoted fields with \"\" escapes, skips blank lines and # comment lines, strips a leading BOM."},{"?":"Unknown/missing rows are skipped by importTransactions; missing required columns return an error string instead."}],"A":[{"!!!":"components/settings/SettingsView.tsx","CRITICAL":"CSV import calls parseTransactionsCSV"},{"?":"lib/db/repository.ts","Consumes CsvRow via importTransactions"}],"AB":[{"?":"lib/db/schema.ts","Row shape must map to Transaction"},{"?":"lib/validations/transaction.ts","Rows are validated after parsing"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify quoted commas, \"\" escapes, BOM, and CRLF are handled"},{"*":"Header names are lowercased/trimmed — a renamed column silently stops importing"}]} */
 
 export interface CsvRow {
   id?: string;

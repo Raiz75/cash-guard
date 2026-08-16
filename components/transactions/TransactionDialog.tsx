@@ -1,34 +1,4 @@
-/**
- * FILE NAME: TransactionDialog.tsx
- *
- * ROLE: Dialog wrapper for TransactionForm, used for both add and edit modes.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Pure presentation: open/onOpenChange/title/id/initial are passed through; the form closes the dialog via onDone → onOpenChange(false).
- *
- * AFFECTS:
- * ? - components/transactions/TransactionsView.tsx (renders it twice: add + edit)
- *
- * AFFECTED BY:
- * ? - components/transactions/TransactionForm.tsx
- * ? - components/ui/dialog.tsx
- * ? - lib/validations/transaction.ts (TransactionInput)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify both add and edit dialogs open/close correctly
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Dialog wrapper for TransactionForm, used for both add and edit modes.","IDD":[{"?":"Pure presentation: open/onOpenChange/title/id/initial are passed through; the form closes the dialog via onDone → onOpenChange(false)"}],"A":[{"?":"components/transactions/TransactionsView.tsx","renders it twice: add + edit"}],"AB":[{"?":"components/transactions/TransactionForm.tsx","TransactionForm changes"},{"?":"components/ui/dialog.tsx","Dialog API changes"},{"?":"lib/validations/transaction.ts","TransactionInput type changes"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify both add and edit dialogs open/close correctly"}]} */
 
 "use client";
 

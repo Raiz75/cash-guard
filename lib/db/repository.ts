@@ -1,43 +1,4 @@
-/**
- * FILE NAME: repository.ts
- *
- * ROLE: The only module that writes to IndexedDB — CRUD for transactions and categories, plus CSV import (with dedupe), export, and category reassignment.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - All writes go through here so live queries in useTransactions.ts never perform rw transactions (a write inside a useLiveQuery callback throws ReadonlyError).
- * ? - updateCategory / importTransactions use one rw transaction so rename-cascade and batch import are atomic.
- * ? - Transactions reference categories by name, so rename cascades via db.transactions.where("category").equals(old).modify(...).
- * ? - Changing a category's type while it has transactions is rejected explicitly.
- *
- * AFFECTS:
- * ! - components/transactions/TransactionForm.tsx (CRITICAL: addTransaction / updateTransaction)
- * ! - components/settings/SettingsView.tsx (CRITICAL: addCategory, exportData, importTransactions, transactionCountForCategory)
- * ? - components/settings/DeleteCategoryDialog.tsx (deleteCategory, reassignCategory)
- * ? - components/settings/CategoryEditDialog.tsx (updateCategory)
- * ? - components/transactions/DeleteTransactionDialog.tsx (deleteTransaction)
- *
- * AFFECTED BY:
- * ? - lib/db/schema.ts (db, newId, types — any schema change ripples here)
- * ? - lib/validations/transaction.ts (transactionSchema validates imported rows; inputs typed)
- * ? - lib/csv.ts (CsvRow is the import source)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Re-verify import dedupe (existingIds vs batchIds), rename cascade, and type-lock logic
- * * - Never call a rw transaction from inside a useLiveQuery callback
- * * - Empty CSV / all-skipped imports must return imported=0 without partial writes
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"The only module that writes to IndexedDB — CRUD for transactions and categories, plus CSV import (with dedupe), export, and category reassignment.","IDD":[{"?":"All writes go through here so live queries in useTransactions.ts never perform rw transactions (a write inside a useLiveQuery callback throws ReadonlyError)"},{"?":"updateCategory/importTransactions use one rw transaction so rename-cascade and batch import are atomic"},{"?":"Transactions reference categories by name, so rename cascades via db.transactions.where(category).equals(old).modify(...)"},{"?":"Changing a category's type while it has transactions is rejected explicitly"}],"A":[{"!!!":"components/transactions/TransactionForm.tsx","CRITICAL":"addTransaction/updateTransaction"},{"!!!":"components/settings/SettingsView.tsx","CRITICAL":"addCategory, exportData, importTransactions, transactionCountForCategory"},{"?":"components/settings/DeleteCategoryDialog.tsx","deleteCategory, reassignCategory"},{"?":"components/settings/CategoryEditDialog.tsx","updateCategory"},{"?":"components/transactions/DeleteTransactionDialog.tsx","deleteTransaction"}],"AB":[{"?":"lib/db/schema.ts","db, newId, types — any schema change ripples here"},{"?":"lib/validations/transaction.ts","transactionSchema validates imported rows; inputs typed"},{"?":"lib/csv.ts","CsvRow is the import source"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Re-verify import dedupe (existingIds vs batchIds), rename cascade, and type-lock logic"},{"*":"Never call a rw transaction from inside a useLiveQuery callback"},{"*":"Empty CSV / all-skipped imports must return imported=0 without partial writes"}]} */
 
 import { db, newId, type Transaction, type Category } from "./schema";
 import {

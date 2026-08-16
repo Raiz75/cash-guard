@@ -1,38 +1,4 @@
-/**
- * FILE NAME: stamp-version.mjs
- *
- * ROLE: Build-time version stamp — reads SemVer from package.json and stamps it into public/sw.js, public/manifest.webmanifest, and a generated lib/version.ts before `next build`.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - package.json "version" is the single source of truth; every other version surface derives from it.
- * ? - sw.js VERSION presence guard AND replace are both anchored to line-start (/^const VERSION = /m and /^const VERSION = [^;]+;/m) so the header comment's identical text is never matched and a missing declaration fails loudly.
- * ? - Fails loudly (non-zero exit) on missing/invalid SemVer so a release never goes out unversioned.
- * ? - Runs only in the production build script; next dev must not stamp.
- * ? - Idempotent: same version produces byte-identical output.
- *
- * AFFECTS:
- * ! - public/sw.js (CRITICAL: VERSION rewrite is the byte change that drives the PWA update detector)
- * ? - public/manifest.webmanifest ("version" field)
- * ? - lib/version.ts (regenerated APP_VERSION constant consumed by SettingsView)
- *
- * AFFECTED BY:
- * ? - package.json ("version" field — the source of truth)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify all three targets stamp and output is idempotent across two builds
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+// AI-CONTEXT-NOTE:{"R":"Build-time version stamp — reads SemVer from package.json and stamps it into public/sw.js, public/manifest.webmanifest, and a generated lib/version.ts before `next build`.","IDD":[{"?":"package.json \"version\" is the single source of truth; every other version surface derives from it."},{"?":"sw.js VERSION presence guard AND replace are both anchored to line-start (/^const VERSION = /m and /^const VERSION = [^;]+;/m) so the header comment's identical text is never matched and a missing declaration fails loudly."},{"?":"Fails loudly (non-zero exit) on missing/invalid SemVer so a release never goes out unversioned."},{"?":"Runs only in the production build script; next dev must not stamp."},{"?":"Idempotent: same version produces byte-identical output."}],"A":[{"!!!":"public/sw.js","CRITICAL":"VERSION rewrite is the byte change that drives the PWA update detector"},{"?":"public/manifest.webmanifest","version field"},{"?":"lib/version.ts","Regenerated APP_VERSION constant consumed by SettingsView"}],"AB":[{"?":"package.json","version field — the source of truth"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify all three targets stamp and output is idempotent across two builds"}]}
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

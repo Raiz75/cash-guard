@@ -1,37 +1,4 @@
-/**
- * FILE NAME: CategoryEditDialog.tsx
- *
- * ROLE: Dialog to rename a category and optionally change its type; type is locked when the category is in use.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Renaming relies on updateCategory's cascade (transactions follow the new name).
- * ? - useWatch (not form.watch) reads the type for the income/expense buttons.
- *
- * AFFECTS:
- * ? - components/settings/SettingsView.tsx (opened from the category list)
- *
- * AFFECTED BY:
- * ? - lib/db/repository.ts (updateCategory)
- * ? - lib/validations/transaction.ts (categorySchema, CategoryInput)
- * ? - lib/db/schema.ts (Category type)
- * ? - components/ui/dialog.tsx, components/ui/button.tsx, components/ui/input.tsx
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify rename cascades to transactions and type buttons are disabled when in use
- * * - updateCategory errors (e.g. "Category not found") must surface via toast
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Dialog to rename a category and optionally change its type; type is locked when the category is in use.","IDD":[{"?":"Renaming relies on updateCategory's cascade (transactions follow the new name)"},{"?":"useWatch (not form.watch) reads the type for the income/expense buttons"}],"A":[{"?":"components/settings/SettingsView.tsx","opened from the category list"}],"AB":[{"?":"lib/db/repository.ts","updateCategory"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/schema.ts","Category type"},{"?":"components/ui (dialog, button, input)","Base UI components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify rename cascades to transactions and type buttons disabled when in use"},{"*":"updateCategory errors (e.g. Category not found) must surface via toast"}]} */
 
 "use client";
 

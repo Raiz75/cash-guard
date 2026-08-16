@@ -1,39 +1,4 @@
-/**
- * FILE NAME: TransactionsView.tsx
- *
- * ROLE: Transactions page orchestrator — filter state, list, add/edit/delete dialogs, and the ?add=1 deep-link handling.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - add/edit/deleting are controlled by component state; ?add=1 in the URL opens the add dialog and closing it router.push("/transactions").
- * ? - dialogKey + editing.id drive React keys so each dialog instance resets cleanly.
- * ? - Filtering is memoized via applyFilters (from TransactionFilters).
- *
- * AFFECTS:
- * ! - app/transactions/page.tsx (CRITICAL: rendered by the route)
- * ? - components/transactions/TransactionFilters.tsx (consumes Filters / applyFilters)
- *
- * AFFECTED BY:
- * ? - lib/hooks/useTransactions.ts (useTransactions)
- * ? - lib/db/schema.ts (Transaction type)
- * ? - lib/validations/transaction.ts (TransactionInput for edit prefill)
- * ? - components/transactions/TransactionFilters.tsx (Filters shape changes break this)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify add (?add=1), edit, delete flows and the "N shown" subtitle
- * * - URL param must not leave a stale ?add=1 in the address bar after closing
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Transactions page orchestrator — filter state, list, add/edit/delete dialogs, and ?add=1 deep-link handling.","IDD":[{"?":"add/edit/delete controlled by component state; ?add=1 URL opens add dialog, closing it router.push('/transactions')"},{"?":"dialogKey + editing.id drive React keys so each dialog instance resets cleanly"},{"?":"Filtering is memoized via applyFilters (from TransactionFilters)"}],"A":[{"!!!":"app/transactions/page.tsx","CRITICAL":"rendered by the route"},{"?":"components/transactions/TransactionFilters.tsx","consumes Filters / applyFilters"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions"},{"?":"lib/db/schema.ts","Transaction type"},{"?":"lib/validations/transaction.ts","TransactionInput for edit prefill"},{"?":"components/transactions/TransactionFilters.tsx","Filters shape changes break this"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify add (?add=1), edit, delete flows and the 'N shown' subtitle"},{"*":"URL param must not leave a stale ?add=1 in the address bar after closing"}]} */
 
 "use client";
 

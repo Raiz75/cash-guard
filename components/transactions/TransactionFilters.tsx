@@ -1,38 +1,4 @@
-/**
- * FILE NAME: TransactionFilters.tsx
- *
- * ROLE: Search input + collapsible filter panel (range, type, category). Exports the Filters interface and the pure applyFilters() predicate used by TransactionsView.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Search stays visible; the IconFilter button toggles the panel. Button is "default" when the panel is open OR any filter differs from its default.
- * ? - applyFilters is exported and kept pure so filtering is testable and memoizable.
- * ? - Category options render via CategoryIcon; type uses "all" | TransactionType.
- *
- * AFFECTS:
- * ! - components/transactions/TransactionsView.tsx (CRITICAL: consumes Filters and applyFilters — renaming fields or changing semantics breaks filtering)
- *
- * AFFECTED BY:
- * ? - lib/hooks/useTransactions.ts (useCategories)
- * ? - lib/format.ts (rangeStartISO, DateRange)
- * ? - components/shared/RangeFilter.tsx and CategoryIcon.tsx
- * ? - lib/db/schema.ts (Transaction, TransactionType)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify search, range, type, and category filtering combine correctly
- * * - Base UI Select value/onValueChange are string | null — keep the `?? "all"` guards
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Search input + collapsible filter panel (range, type, category). Exports the Filters interface and the pure applyFilters() predicate used by TransactionsView.","IDD":[{"?":"Search stays visible; the IconFilter button toggles the panel. Button is 'default' when the panel is open OR any filter differs from its default"},{"?":"applyFilters is exported and kept pure so filtering is testable and memoizable"},{"?":"Category options render via CategoryIcon; type uses 'all' | TransactionType"}],"A":[{"!!!":"components/transactions/TransactionsView.tsx","CRITICAL":"consumes Filters and applyFilters — renaming fields or changing semantics breaks filtering"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","rangeStartISO, DateRange"},{"?":"components/shared/RangeFilter.tsx and CategoryIcon.tsx","range select or category icon changes"},{"?":"lib/db/schema.ts","Transaction, TransactionType"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify search, range, type, and category filtering combine correctly"},{"*":"Base UI Select value/onValueChange are string | null — keep the 'all' guards"}]} */
 
 "use client";
 

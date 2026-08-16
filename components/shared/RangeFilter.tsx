@@ -1,35 +1,4 @@
-/**
- * FILE NAME: RangeFilter.tsx
- *
- * ROLE: Four-button quick date-range selector (All time / Today / 7 days / 1 month).
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Pure controlled component: value + onChange, no internal state.
- * ? - Options are hardcoded to match the DateRange union in lib/format.
- *
- * AFFECTS:
- * ? - components/dashboard/DashboardView.tsx (spending breakdown range)
- * ? - components/transactions/TransactionFilters.tsx (filter range)
- *
- * AFFECTED BY:
- * ? - lib/format.ts (DateRange type)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify all four ranges map to the correct labels and values
- * * - Adding a range requires updating DateRange + rangeStartISO too
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Four-button quick date-range selector (All time/Today/7 days/1 month).","IDD":[{"?":"Pure controlled component: value+onChange, no internal state"},{"?":"Options hardcoded to match the DateRange union in lib/format"}],"A":[{"?":"components/dashboard/DashboardView.tsx","spending breakdown range"},{"?":"components/transactions/TransactionFilters.tsx","filter range"}],"AB":[{"?":"lib/format.ts","DateRange type"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify all four ranges map to the correct labels and values"},{"*":"Adding a range requires updating DateRange+rangeStartISO too"}]} */
 
 "use client";
 

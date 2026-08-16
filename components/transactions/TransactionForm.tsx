@@ -1,39 +1,4 @@
-/**
- * FILE NAME: TransactionForm.tsx
- *
- * ROLE: React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description).
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint.
- * ? - When adding, the first category of the selected type is auto-selected after load.
- * ? - A local TextField helper wraps Input for number/date variants.
- *
- * AFFECTS:
- * ! - components/transactions/TransactionDialog.tsx (CRITICAL: rendered inside the dialog)
- *
- * AFFECTED BY:
- * ? - lib/validations/transaction.ts (transactionSchema, TransactionInput)
- * ? - lib/db/repository.ts (addTransaction, updateTransaction)
- * ? - lib/hooks/useTransactions.ts (useCategories)
- * ? - lib/format.ts (todayISO default date)
- * ? - components/shared/CategoryIcon.tsx (select option icons)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify edit prefill, auto-select first category, validation errors, and toasts
- * * - Editing keeps the existing id; switching type must not lose category selection
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description).","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"}]} */
 
 "use client";
 

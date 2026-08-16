@@ -1,33 +1,4 @@
-/**
- * FILE NAME: BottomNav.tsx
- *
- * ROLE: Fixed bottom navigation (Home / Transactions / Settings) with active-state highlighting based on the current pathname.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Fixed positioning means page shells add pb-20 so content clears the nav.
- * ? - lucide icons; active link uses text-primary, inactive uses text-muted-foreground.
- *
- * AFFECTS:
- * ! - Every page shell (DashboardView, TransactionsView, SettingsView) (CRITICAL: all three render BottomNav and rely on its fixed height)
- *
- * AFFECTED BY:
- * ? - app route paths (/, /transactions, /settings) — adding a route changes this
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify active highlighting and that pb-20 shells still clear the nav
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Fixed bottom navigation (Home/Transactions/Settings) with active-state highlighting based on the current pathname.","IDD":[{"?":"Fixed positioning means page shells add pb-20 so content clears the nav"},{"?":"lucide icons; active link uses text-primary, inactive uses text-muted-foreground"}],"A":[{"!!!":"Every page shell (DashboardView, TransactionsView, SettingsView)","CRITICAL":"all three render BottomNav and rely on its fixed height"}],"AB":[{"?":"app route paths (/, /transactions, /settings)","adding a route changes this"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify active highlighting and that pb-20 shells still clear the nav"}]} */
 
 "use client";
 

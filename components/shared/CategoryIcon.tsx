@@ -1,38 +1,4 @@
-/**
- * FILE NAME: CategoryIcon.tsx
- *
- * ROLE: Resolves a stored category icon-name string to a Tabler icon component, falling back to IconTag for unknown names.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - The map is the ONLY place icon names are turned into components; unknown names silently fall back to IconTag so old data never crashes.
- * ? - Tabler icons (@tabler/icons-react), per the base-maia preset convention.
- *
- * AFFECTS:
- * ? - components/dashboard/DashboardView.tsx (spending breakdown icons)
- * ? - components/transactions/TransactionForm.tsx (category select icons)
- * ? - components/transactions/TransactionFilters.tsx (category select icons)
- * ? - components/settings/SettingsView.tsx (category row icons)
- *
- * AFFECTED BY:
- * ? - lib/db/schema.ts (Category.icon is the input name string)
- * ? - @tabler/icons-react version
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify every known icon name still maps and unknown names fall back gracefully
- * * - Adding a new category icon requires a new map entry here
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Resolves a stored category icon-name string to a Tabler icon component, falling back to IconTag for unknown names.","IDD":[{"?":"The map is the ONLY place icon names become components; unknown names silently fall back to IconTag so old data never crashes"},{"?":"Tabler icons (@tabler/icons-react), per the base-maia preset convention"}],"A":[{"?":"components/dashboard/DashboardView.tsx","spending breakdown icons"},{"?":"components/transactions/TransactionForm.tsx","category select icons"},{"?":"components/transactions/TransactionFilters.tsx","category select icons"},{"?":"components/settings/SettingsView.tsx","category row icons"}],"AB":[{"?":"lib/db/schema.ts","Category.icon is the input name string"},{"?":"@tabler/icons-react version","icon availability"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify every known icon name still maps and unknown names fall back gracefully"},{"*":"Adding a new category icon requires a new map entry here"}]} */
 
 "use client";
 

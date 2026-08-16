@@ -1,35 +1,4 @@
-/**
- * FILE NAME: DeleteCategoryDialog.tsx
- *
- * ROLE: Confirmation dialog for deleting a category; when transactions use it, requires selecting a same-type category to reassign them first.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - If the category is in use (count > 0), delete is disabled until a reassign target is chosen; reassignCategory moves transactions before deleting.
- *
- * AFFECTS:
- * ? - components/settings/SettingsView.tsx (opened from the category list)
- *
- * AFFECTED BY:
- * ? - lib/db/repository.ts (deleteCategory, reassignCategory)
- * ? - lib/db/schema.ts (Category type)
- * ? - components/ui/dialog.tsx, components/ui/select.tsx, components/ui/button.tsx
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify the in-use path (reassign required) and the unused path (direct delete)
- * * - With no candidates, the Delete button must stay disabled
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"Confirmation dialog for deleting a category; when transactions use it, requires selecting a same-type category to reassign them first.","IDD":[{"?":"If the category is in use (count > 0), delete is disabled until a reassign target is chosen; reassignCategory moves transactions before deleting"}],"A":[{"?":"components/settings/SettingsView.tsx","opened from the category list"}],"AB":[{"?":"lib/db/repository.ts","deleteCategory, reassignCategory"},{"?":"lib/db/schema.ts","Category type"},{"?":"components/ui (dialog, select, button)","Base UI components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify the in-use path (reassign required) and the unused path (direct delete)"},{"*":"With no candidates, the Delete button must stay disabled"}]} */
 
 "use client";
 

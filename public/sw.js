@@ -1,39 +1,4 @@
-/**
- * FILE NAME: sw.js
- *
- * ROLE: PWA service worker — caches the app shell on install, serves cached-first with network fallback, cleans up old cache versions on activate, keeps new workers waiting, and responds to SKIP_WAITING to apply user-approved updates.
- *
- * IMPORTANT DEVELOPER DECISIONS ON THIS FILE:
- * ? - Cache-first for same-origin GET requests; cross-origin and non-GET are ignored.
- * ? - The CACHE name encodes VERSION ("cash-guard-v" + VERSION); VERSION is auto-stamped from package.json at build time (const VERSION = "0.1.0";), so the cache name and the byte-diff update signal are derived, not hand-bumped.
- * ? - skipWaiting() is intentionally NOT called on install so new workers sit in "waiting" until the user approves via a SKIP_WAITING message.
- * ? - Offline navigation falls back to the cached "/" (the app shell).
- *
- * AFFECTS:
- * ! - Offline/PWA behavior of the whole app (CRITICAL: a broken SW breaks offline use)
- * ? - components/dashboard/DashboardView.tsx (registers this file in production)
- *
- * AFFECTED BY:
- * ? - public/ files listed in cache.addAll (/, manifest.webmanifest, icons)
- * ? - App shell changes (new routes/assets must be added to the cache list)
- *
- * ON FILE EDIT:
- * ! - npm run build
- * ! - npm run lint
- * ? - Verify install/activate/fetch handlers still work after edits
- * * - Fetch handler must never cache POST or cross-origin requests
- * * - VERSION is stamped by scripts/stamp-version.mjs on `npm run build`; bump package.json version to release
- *
- * AI INSTRUCTIONS
- * - When editing this file, ALWAYS check the AFFECTS list first
- * - After changes, run ALL tests listed under ON FILE EDIT
- * - If AFFECTED BY files change, verify this file still works
- * - KEEP THIS HEADER CURRENT: whenever you edit this file, update ROLE, decisions, AFFECTS, AFFECTED BY, and ON FILE EDIT to match the change
- * - Keep every entry on one line (no wrapped continuations) so Better Comments highlights the full line
- * - Red (!) items are CRITICAL and cannot be skipped
- * - Blue (?) items are important but not blocking
- * - Green (*) items are nice-to-have; skip if not applicable
- */
+/* AI-CONTEXT-NOTE:{"R":"PWA service worker — caches the app shell on install, serves cached-first with network fallback, cleans up old cache versions on activate, keeps new workers waiting, and responds to SKIP_WAITING to apply user-approved updates.","IDD":[{"?":"Cache-first for same-origin GET requests; cross-origin and non-GET are ignored."},{"?":"The CACHE name encodes VERSION (\"cash-guard-v\" + VERSION); VERSION is auto-stamped from package.json at build time (const VERSION = \"0.1.0\";), so the cache name and the byte-diff update signal are derived, not hand-bumped."},{"?":"skipWaiting() is intentionally NOT called on install so new workers sit in \"waiting\" until the user approves via a SKIP_WAITING message."},{"?":"Offline navigation falls back to the cached \"/\" (the app shell)."}],"A":[{"!!!":"Offline/PWA behavior of the whole app","CRITICAL":"a broken SW breaks offline use"},{"?":"components/dashboard/DashboardView.tsx","Registers this file in production"}],"AB":[{"?":"public/ files listed in cache.addAll (/, manifest.webmanifest, icons)"},{"?":"App shell changes","New routes/assets must be added to the cache list"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify install/activate/fetch handlers still work after edits"},{"*":"Fetch handler must never cache POST or cross-origin requests"},{"*":"VERSION is stamped by scripts/stamp-version.mjs on `npm run build`; bump package.json version to release"}]} */
 
 const VERSION = "0.1.0";
 const CACHE = "cash-guard-v" + VERSION;
