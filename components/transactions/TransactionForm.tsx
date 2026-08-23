@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description).","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"}]} */
+/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description) with monthly-budget overspend warning toasts.","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"},{"?":"Budget/spent snapshot before the write so spentAfter reflects the just-saved transaction; warnings fire only after a successful save"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction, getBudget, getMonthlySpent"},{"?":"lib/budget.ts","crossedTier + BUDGET_TIER_MESSAGES for overspend toasts"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date, monthRange current-month window"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"saving a current-month expense crossing 50/75/90/100% fires the matching warning toast"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"}]} */
 
 "use client";
 
@@ -7,9 +7,15 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { transactionSchema, type TransactionInput } from "@/lib/validations/transaction";
-import { addTransaction, updateTransaction } from "@/lib/db/repository";
+import {
+  addTransaction,
+  updateTransaction,
+  getBudget,
+  getMonthlySpent,
+} from "@/lib/db/repository";
+import { crossedTier, BUDGET_TIER_MESSAGES } from "@/lib/budget";
 import { useCategories } from "@/lib/hooks/useTransactions";
-import { todayISO } from "@/lib/format";
+import { todayISO, monthRange } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
 import { Input } from "@/components/ui/input";
@@ -56,6 +62,21 @@ export function TransactionForm({ id, initial, onDone }: Props) {
 
   const onSubmit = async (data: TransactionInput) => {
     try {
+      let limit: number | null = null;
+      let spentBefore: number | null = null;
+
+      if (data.type === "expense") {
+        const { start, end } = monthRange();
+        const inCurrentMonth = data.date >= start && data.date <= end;
+        if (inCurrentMonth) {
+          const budget = await getBudget();
+          if (budget) {
+            limit = budget.amount;
+            spentBefore = await getMonthlySpent();
+          }
+        }
+      }
+
       if (editing && id) {
         await updateTransaction(id, data);
         toast.success("Transaction updated");
@@ -63,6 +84,18 @@ export function TransactionForm({ id, initial, onDone }: Props) {
         await addTransaction(data);
         toast.success("Transaction added");
       }
+
+      if (limit !== null && spentBefore !== null) {
+        const spentAfter = await getMonthlySpent();
+        const crossed = crossedTier(
+          (spentBefore / limit) * 100,
+          (spentAfter / limit) * 100
+        );
+        if (crossed) {
+          toast.warning(BUDGET_TIER_MESSAGES[crossed]);
+        }
+      }
+
       onDone?.();
     } catch {
       toast.error("Something went wrong saving the transaction");
