@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/db/repository.ts — CRUD, category rename cascade, type-lock, CSV import dedupe/atomicity, overall-budget get/set, and monthly-spend summation. Uses an in-memory mock of the Dexie `db` (via vi.mock of schema.ts) so no IndexedDB is needed.","IDD":[{"?":"db.transaction('rw', ...) mock invokes the callback so rw logic inside importTransactions/updateCategory runs"},{"?":"Mock tables track in-memory state and expose where().equals().count()/modify(), between().toArray(), and put() (upsert) for cascade/range/budget tests"},{"?":"newId and types are kept real via importOriginal; only `db` is replaced"},{"?":"Repository is the sole write path — tests assert it never mutates state on skipped imports"},{"?":"getMonthlySpent tests pin time via vi.useFakeTimers/setSystemTime so monthRange() is deterministic"}],"A":[{"!!!":"lib/db/repository.ts","exercised by these tests","CRITICAL":"type-lock / rename cascade must not regress"},{"!":"lib/validations/transaction.ts","rows are safeParse'd by importTransactions"},{"?":"lib/csv.ts","CsvRow is the import shape"},{"?":"lib/db/schema.ts","OVERALL_BUDGET_ID and Budget shape asserted via setBudget/getBudget tests"}],"AB":[{"?":"dexie version","any API change to Table.where chaining would need mock updates"},{"?":"vitest fake timers","system-time mocking behavior affects getMonthlySpent cases"}],"E":[{"!!":"npm test -- tests/repository.test.ts"},{"?":"setBudget preserves createdAt while refreshing updatedAt; single 'overall' row"},{"?":"getMonthlySpent sums only current-month expenses (0 when none)"},{"?":"Empty/all-skipped imports return imported=0 with no partial writes"},{"*":"updateCategory type-change with existing transactions throws before touching the DB"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/db/repository.ts — CRUD, category rename cascade, type-lock, CSV import dedupe/atomicity, overall-budget get/set with allocation guards, namespaced cat:<id> budget rows, deleteCategory cascade, and monthly-spend summation (total and per-category). Uses an in-memory mock of the Dexie `db` (via vi.mock of schema.ts) so no IndexedDB is needed.","IDD":[{"?":"db.transaction('rw', ...) mock invokes the callback so rw logic inside importTransactions/updateCategory runs"},{"?":"Mock tables track in-memory state and expose where().equals().count()/modify(), between().toArray(), and put() (upsert) for cascade/range/budget tests"},{"?":"newId and types are kept real via importOriginal; only `db` is replaced"},{"?":"Repository is the sole write path — tests assert it never mutates state on skipped imports"},{"?":"getMonthlySpent tests pin time via vi.useFakeTimers/setSystemTime so monthRange() is deterministic"}],"A":[{"!!!":"lib/db/repository.ts","exercised by these tests","CRITICAL":"type-lock / rename cascade must not regress"},{"!":"lib/validations/transaction.ts","rows are safeParse'd by importTransactions"},{"?":"lib/csv.ts","CsvRow is the import shape"},{"?":"lib/db/schema.ts","OVERALL_BUDGET_ID and Budget shape asserted via setBudget/getBudget tests"}],"AB":[{"?":"dexie version","any API change to Table.where chaining would need mock updates"},{"?":"vitest fake timers","system-time mocking behavior affects getMonthlySpent cases"},{"?":"lib/format.ts","monthRange() pins the current-month window asserted by getMonthlySpentByCategory"}],"E":[{"!!":"npm test -- tests/repository.test.ts"},{"!!":"setCategoryBudget guards: rejects without overall budget, rejects over-allocation, allows exactly-equal totals, preserves createdAt on edit"},{"!!":"setBudget allocation guard: rejects lowering below allocated total, allows equal; deleteCategory cascades its cat:<id> row"},{"?":"setBudget preserves createdAt while refreshing updatedAt; single 'overall' row"},{"?":"getMonthlySpent sums only current-month expenses (0 when none)"},{"?":"getMonthlySpentByCategory keys by category name, expenses only"},{"?":"Empty/all-skipped imports return imported=0 with no partial writes"},{"*":"updateCategory type-change with existing transactions throws before touching the DB"}]} */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- In-memory mock of the Dexie db ---------------------------------------
@@ -93,7 +93,13 @@ import {
   getBudget,
   setBudget,
   getMonthlySpent,
+  getCategoryBudgets,
+  setCategoryBudget,
+  deleteCategoryBudget,
+  getMonthlySpentByCategory,
 } from "@/lib/db/repository";
+import { categoryBudgetId, parseCategoryBudgetId } from "@/lib/db/schema";
+import { monthRange } from "@/lib/format";
 
 beforeEach(() => {
   transactionsStore.length = 0;
@@ -379,5 +385,101 @@ describe("getMonthlySpent", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("category budget id helpers", () => {
+  it("round-trips a category id", () => {
+    const id = categoryBudgetId("abc123");
+    expect(id).toBe("cat:abc123");
+    expect(parseCategoryBudgetId(id)).toBe("abc123");
+  });
+
+  it("returns null for non-category rows", () => {
+    expect(parseCategoryBudgetId("overall")).toBeNull();
+  });
+});
+
+describe("setCategoryBudget", () => {
+  it("creates then updates preserving createdAt", async () => {
+    await setBudget(10000);
+    await setCategoryBudget("catA", 3000);
+    let rows = await getCategoryBudgets();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe("cat:catA");
+    expect(rows[0].amount).toBe(3000);
+    const created = rows[0].createdAt;
+    await setCategoryBudget("catA", 4500);
+    rows = await getCategoryBudgets();
+    expect(rows[0].amount).toBe(4500);
+    expect(rows[0].createdAt).toBe(created);
+  });
+
+  it("rejects when no overall budget exists", async () => {
+    await expect(setCategoryBudget("catA", 3000)).rejects.toThrow(
+      "Set a monthly budget first"
+    );
+  });
+
+  it("rejects over-allocation but allows exactly-equal totals", async () => {
+    await setBudget(10000);
+    await setCategoryBudget("a", 6000);
+    await expect(setCategoryBudget("b", 5000)).rejects.toThrow(
+      /left unallocated/
+    );
+    await setCategoryBudget("b", 4000);
+    expect(await getCategoryBudgets()).toHaveLength(2);
+  });
+
+  it("editing a row does not double-count itself against the cap", async () => {
+    await setBudget(10000);
+    await setCategoryBudget("a", 6000);
+    await setCategoryBudget("a", 9000);
+    expect((await getCategoryBudgets())[0].amount).toBe(9000);
+  });
+});
+
+describe("setBudget allocation guard", () => {
+  it("rejects lowering below allocated total, allows equal", async () => {
+    await setBudget(10000);
+    await setCategoryBudget("a", 7000);
+    await expect(setBudget(5000)).rejects.toThrow(/already allocated/);
+    await setBudget(7000);
+    expect((await getBudget())!.amount).toBe(7000);
+  });
+});
+
+describe("deleteCategoryBudget", () => {
+  it("removes only its own row", async () => {
+    await setBudget(10000);
+    await setCategoryBudget("a", 1000);
+    await setCategoryBudget("b", 2000);
+    await deleteCategoryBudget("a");
+    const rows = await getCategoryBudgets();
+    expect(rows.map((r) => r.id)).toEqual(["cat:b"]);
+  });
+});
+
+describe("deleteCategory cascade", () => {
+  it("deletes the category's breakdown row atomically", async () => {
+    await setBudget(10000);
+    const cat = await addCategory({ name: "Food", type: "expense" });
+    await setCategoryBudget(cat.id, 2500);
+    await deleteCategory(cat.id);
+    expect(await getCategoryBudgets()).toHaveLength(0);
+  });
+});
+
+describe("getMonthlySpentByCategory", () => {
+  it("sums current-month expenses per category name", async () => {
+    const { start } = monthRange();
+    await addTransaction({ type: "expense", amount: 200, category: "Food", date: start });
+    await addTransaction({ type: "expense", amount: 100, category: "Food", date: start });
+    await addTransaction({ type: "expense", amount: 50, category: "Transport", date: start });
+    await addTransaction({ type: "income", amount: 999, category: "Salary", date: start });
+    const spent = await getMonthlySpentByCategory();
+    expect(spent["Food"]).toBe(300);
+    expect(spent["Transport"]).toBe(50);
+    expect(spent["Salary"]).toBeUndefined();
   });
 });
