@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description) with monthly-budget overspend warning toasts.","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"},{"?":"Budget/spent snapshot before the write so spentAfter reflects the just-saved transaction; warnings fire only after a successful save"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction, getBudget, getMonthlySpent"},{"?":"lib/budget.ts","crossedTier + BUDGET_TIER_MESSAGES for overspend toasts"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date, monthRange current-month window"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"saving a current-month expense crossing 50/75/90/100% fires the matching warning toast"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"}]} */
+/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description) with monthly-budget overspend warning toasts.","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"},{"!!":"Best-effort budget warnings: the pre-write snapshot (getBudget/getMonthlySpent) and post-save recompute are wrapped so a failure there NEVER fires the save-error toast — only addTransaction/updateTransaction failures surface 'Something went wrong saving the transaction'; onDone always runs after a successful write"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction, getBudget, getMonthlySpent"},{"?":"lib/budget.ts","crossedTier + BUDGET_TIER_MESSAGES for overspend toasts"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date, monthRange current-month window"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"saving a current-month expense crossing 50/75/90/100% fires the matching warning toast"},{"!!":"Warnings are best-effort: if getBudget/getMonthlySpent/recompute throw, no save-error toast appears and onDone still runs after a successful save; write failures alone show the error toast"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"}]} */
 
 "use client";
 
@@ -61,22 +61,27 @@ export function TransactionForm({ id, initial, onDone }: Props) {
   }, [typeCategories, editing, form]);
 
   const onSubmit = async (data: TransactionInput) => {
-    try {
-      let limit: number | null = null;
-      let spentBefore: number | null = null;
+    let limit: number | null = null;
+    let spentBefore: number | null = null;
 
-      if (data.type === "expense") {
-        const { start, end } = monthRange();
-        const inCurrentMonth = data.date >= start && data.date <= end;
-        if (inCurrentMonth) {
+    if (data.type === "expense") {
+      const { start, end } = monthRange();
+      const inCurrentMonth = data.date >= start && data.date <= end;
+      if (inCurrentMonth) {
+        try {
           const budget = await getBudget();
           if (budget) {
             limit = budget.amount;
             spentBefore = await getMonthlySpent();
           }
+        } catch {
+          limit = null;
+          spentBefore = null;
         }
       }
+    }
 
+    try {
       if (editing && id) {
         await updateTransaction(id, data);
         toast.success("Transaction updated");
@@ -84,7 +89,12 @@ export function TransactionForm({ id, initial, onDone }: Props) {
         await addTransaction(data);
         toast.success("Transaction added");
       }
+    } catch {
+      toast.error("Something went wrong saving the transaction");
+      return;
+    }
 
+    try {
       if (limit !== null && spentBefore !== null) {
         const spentAfter = await getMonthlySpent();
         const crossed = crossedTier(
@@ -95,11 +105,11 @@ export function TransactionForm({ id, initial, onDone }: Props) {
           toast.warning(BUDGET_TIER_MESSAGES[crossed]);
         }
       }
-
-      onDone?.();
     } catch {
-      toast.error("Something went wrong saving the transaction");
+      // Budget warnings are best-effort — a failure here must not look like a save error.
     }
+
+    onDone?.();
   };
 
   return (

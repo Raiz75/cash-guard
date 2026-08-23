@@ -90,4 +90,17 @@ describe("budgetSchema", () => {
   it.each([0, -1])("rejects non-positive amount %s", (amount) => {
     expect(budgetSchema.safeParse({ amount }).success).toBe(false);
   });
+
+  it.each(["", Number.NaN])(
+    "rejects blank/NaN amount %s with the friendly message",
+    (amount) => {
+      const parsed = budgetSchema.safeParse({ amount });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.issues[0].message).toBe(
+          "Budget must be greater than 0"
+        );
+      }
+    }
+  );
 });
