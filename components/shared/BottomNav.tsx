@@ -1,17 +1,17 @@
-/* AI-CONTEXT-NOTE:{"R":"Fixed bottom navigation (Home/Transactions/Budget/Settings) with active-state highlighting based on the current pathname.","IDD":[{"?":"Fixed positioning means page shells add pb-20 so content clears the nav"},{"?":"lucide icons plus Tabler IconPigMoney for Budget per project convention; active link uses text-primary, inactive uses text-muted-foreground"}],"A":[{"!!!":"Every page shell (DashboardView, TransactionsView, BudgetView, SettingsView)","CRITICAL":"all four render BottomNav and rely on its fixed height"},{"!!":"components/budget/BudgetView.tsx","/budget is a new destination reached via this nav"}],"AB":[{"?":"app route paths (/, /transactions, /budget, /settings)","adding a route changes this"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify active highlighting across all four tabs (including /budget) and that pb-20 shells still clear the nav"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Fixed bottom navigation (Home/Transactions/Budget/Settings) with active-state highlighting based on the current pathname.","IDD":[{"?":"Fixed positioning means page shells add pb-20 so content clears the nav"},{"?":"lucide icons (Home/List) plus Tabler IconPigMoney for Budget and IconSettings for Settings per project convention; active link uses text-primary, inactive uses text-muted-foreground"}],"A":[{"!!!":"Every page shell (DashboardView, TransactionsView, BudgetView, SettingsView)","CRITICAL":"all four render BottomNav and rely on its fixed height"},{"!!":"components/budget/BudgetView.tsx","/budget is a new destination reached via this nav"}],"AB":[{"?":"app route paths (/, /transactions, /budget, /settings)","adding a route changes this"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify active highlighting across all four tabs (including /budget) and that pb-20 shells still clear the nav"}]} */
 
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, List, ChartPie } from "lucide-react";
-import { IconPigMoney } from "@tabler/icons-react";
+import { Home, List } from "lucide-react";
+import { IconPigMoney, IconSettings } from "@tabler/icons-react";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
   { href: "/transactions", label: "Transactions", icon: List },
   { href: "/budget", label: "Budget", icon: IconPigMoney },
-  { href: "/settings", label: "Settings", icon: ChartPie },
+  { href: "/settings", label: "Settings", icon: IconSettings },
 ];
 
 export function BottomNav() {
