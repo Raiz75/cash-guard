@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description) with monthly-budget overspend warning toasts.","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"},{"!!":"Best-effort budget warnings: the pre-write snapshot (getBudget/getMonthlySpent) and post-save recompute are wrapped so a failure there NEVER fires the save-error toast — only addTransaction/updateTransaction failures surface 'Something went wrong saving the transaction'; onDone always runs after a successful write"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction, getBudget, getMonthlySpent"},{"?":"lib/budget.ts","crossedTier + BUDGET_TIER_MESSAGES for overspend toasts"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date, monthRange current-month window"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"saving a current-month expense crossing 50/75/90/100% fires the matching warning toast"},{"!!":"Warnings are best-effort: if getBudget/getMonthlySpent/recompute throw, no save-error toast appears and onDone still runs after a successful save; write failures alone show the error toast"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"}]} */
+/* AI-CONTEXT-NOTE:{"R":"React Hook Form + Zod form for adding and editing transactions (type, amount, category, date, description) with monthly-budget overspend warning toasts — overall-budget toast first, then a labeled per-category breakdown toast when the saved expense crosses that category's own thresholds.","IDD":[{"?":"useWatch (not form.watch) drives the type/category selects — memo-safe for the React Compiler lint"},{"?":"When adding, the first category of the selected type is auto-selected after load"},{"?":"A local TextField helper wraps Input for number/date variants"},{"!!":"Best-effort budget warnings: the pre-write snapshot (getBudget/getMonthlySpent + getCategoryBudgets/getMonthlySpentByCategory) and both post-save recomputes are individually try/catch-wrapped so a failure there NEVER fires the save-error toast — only addTransaction/updateTransaction failures surface 'Something went wrong saving the transaction'; onDone always runs after a successful write"},{"?":"Category snapshot resolves the row via categories.find(name) then getCategoryBudgets().find(categoryBudgetId(cat.id)) so only categories with an existing breakdown warn"}],"A":[{"!!!":"components/transactions/TransactionDialog.tsx","CRITICAL":"rendered inside the dialog"},{"!!":"tests/transactionFormToast.test.ts","asserts overall-then-category toast order and best-effort rejection path"}],"AB":[{"?":"lib/validations/transaction.ts","transactionSchema, TransactionInput"},{"?":"lib/db/repository.ts","addTransaction, updateTransaction, getBudget, getMonthlySpent, getCategoryBudgets, getMonthlySpentByCategory"},{"?":"lib/db/schema.ts","categoryBudgetId keys the cat:<id> breakdown lookup"},{"?":"lib/budget.ts","crossedTier + BUDGET_TIER_MESSAGES + budgetTierMessage(label) for overspend toasts"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","todayISO default date, monthRange current-month window"},{"?":"components/shared/CategoryIcon.tsx","select option icons"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/transactionFormToast.test.ts — one save must fire overall warning Nth(1) then category warning Nth(2); lookup rejections keep the save successful with zero error/warning toasts"},{"!!":"saving a current-month expense crossing 50/75/90/100% fires the matching warning toast"},{"!!":"Warnings are best-effort: if getBudget/getMonthlySpent/getCategoryBudgets/getMonthlySpentByCategory/recompute throw, no save-error toast appears and onDone still runs after a successful save; write failures alone show the error toast"},{"?":"Verify edit prefill, auto-select first category, validation errors, and toasts"},{"*":"Editing keeps the existing id; switching type must not lose category selection"},{"*":"Income saves and non-current-month expenses must not fire budget toasts"}]} */
 
 "use client";
 
@@ -12,8 +12,11 @@ import {
   updateTransaction,
   getBudget,
   getMonthlySpent,
+  getCategoryBudgets,
+  getMonthlySpentByCategory,
 } from "@/lib/db/repository";
-import { crossedTier, BUDGET_TIER_MESSAGES } from "@/lib/budget";
+import { crossedTier, BUDGET_TIER_MESSAGES, budgetTierMessage } from "@/lib/budget";
+import { categoryBudgetId } from "@/lib/db/schema";
 import { useCategories } from "@/lib/hooks/useTransactions";
 import { todayISO, monthRange } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -63,6 +66,9 @@ export function TransactionForm({ id, initial, onDone }: Props) {
   const onSubmit = async (data: TransactionInput) => {
     let limit: number | null = null;
     let spentBefore: number | null = null;
+    let catLimit: number | null = null;
+    let catSpentBefore: number | null = null;
+    let catLabel: string | null = null;
 
     if (data.type === "expense") {
       const { start, end } = monthRange();
@@ -74,9 +80,23 @@ export function TransactionForm({ id, initial, onDone }: Props) {
             limit = budget.amount;
             spentBefore = await getMonthlySpent();
           }
+          const cat = (categories ?? []).find((c) => c.name === data.category);
+          if (cat) {
+            const row = (await getCategoryBudgets()).find(
+              (r) => r.id === categoryBudgetId(cat.id)
+            );
+            if (row) {
+              catLimit = row.amount;
+              catSpentBefore = (await getMonthlySpentByCategory())[cat.name] ?? 0;
+              catLabel = cat.name;
+            }
+          }
         } catch {
           limit = null;
           spentBefore = null;
+          catLimit = null;
+          catSpentBefore = null;
+          catLabel = null;
         }
       }
     }
@@ -107,6 +127,22 @@ export function TransactionForm({ id, initial, onDone }: Props) {
       }
     } catch {
       // Budget warnings are best-effort — a failure here must not look like a save error.
+    }
+
+    try {
+      if (catLimit !== null && catSpentBefore !== null && catLabel) {
+        const catSpentAfter =
+          (await getMonthlySpentByCategory())[catLabel] ?? 0;
+        const crossed = crossedTier(
+          (catSpentBefore / catLimit) * 100,
+          (catSpentAfter / catLimit) * 100
+        );
+        if (crossed) {
+          toast.warning(budgetTierMessage(crossed, catLabel));
+        }
+      }
+    } catch {
+      // Category warnings are best-effort like the overall ones.
     }
 
     onDone?.();
