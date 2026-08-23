@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Defines the Dexie database (tables, indexes, version) and the canonical Transaction/Category/TransactionType types plus the newId() helper.","IDD":[{"?":"Local-first: all app data lives in IndexedDB via Dexie; single source of truth for the schema every other module depends on"},{"?":"Transactions and categories are separate tables; category name (not id) is the join key used by transactions, so renaming must cascade (see repository.ts)"},{"?":"Category.icon stores a Tabler icon name string (nullable); colors are CSS color strings resolved at render time"},{"?":"IDs are UUIDs via newId(); createdAt is a Date.now() epoch number"}],"A":[{"!!!":"lib/db/repository.ts","CRITICAL":"table definitions, types, and newId are its foundation — changing a column or index breaks every write operation"},{"!!!":"lib/hooks/useTransactions.ts","CRITICAL":"queries db.transactions/db.categories and exposes Transaction/Category types to the UI"},{"?":"lib/csv.ts","CsvRow shape must stay parseable into Transaction"},{"?":"lib/validations/transaction.ts","inferred input types must match these records"},{"?":"Every view/component importing Transaction/Category types","type dependencies"}],"AB":[{"?":"Dexie and uuid package versions","upgrades can change index/type behavior"}],"E":[{"!!":"npm run build","type errors surface anywhere the types are used"},{"!!":"npm run lint"},{"?":"Bump/verify Dexie version(...) when adding columns, or old installs lose data"},{"?":"Verify index fields match the queries in useTransactions.ts"},{"*":"Adding a required field breaks CSV import, forms, and repository writes — check all"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Defines the Dexie database (three tables: transactions, categories, budgets; indexes; versions 1–2) and the canonical Transaction/Category/Budget/TransactionType types plus the newId() helper and OVERALL_BUDGET_ID.","IDD":[{"?":"Local-first: all app data lives in IndexedDB via Dexie; single source of truth for the schema every other module depends on"},{"?":"Transactions and categories are separate tables; category name (not id) is the join key used by transactions, so renaming must cascade (see repository.ts)"},{"?":"Category.icon stores a Tabler icon name string (nullable); colors are CSS color strings resolved at render time"},{"?":"IDs are UUIDs via newId(); createdAt is a Date.now() epoch number"},{"?":"version(1) is kept untouched and version(2) re-declares both old stores plus the new budgets table so old installs upgrade losslessly"},{"?":"The overall budget is a singleton row keyed by OVERALL_BUDGET_ID ('overall') rather than a settings record"}],"A":[{"!!!":"lib/db/repository.ts","CRITICAL":"table definitions, types, and newId are its foundation — changing a column or index breaks every write operation"},{"!!!":"lib/hooks/useTransactions.ts","CRITICAL":"queries db.transactions/db.categories and exposes Transaction/Category types to the UI"},{"!":"Budget views/components (Tasks 4+ of the budget-and-pagination plan)","consume Budget/OVERALL_BUDGET_ID via repository getBudget/setBudget"},{"?":"lib/csv.ts","CsvRow shape must stay parseable into Transaction"},{"?":"lib/validations/transaction.ts","inferred input types must match these records"},{"?":"Every view/component importing Transaction/Category types","type dependencies"}],"AB":[{"?":"Dexie and uuid package versions","upgrades can change index/type behavior"}],"E":[{"!!":"npm run build","type errors surface anywhere the types are used"},{"!!":"npm run lint"},{"!!":"npm test -- tests/repository.test.ts after touching schema or budget operations"},{"?":"Bump/verify Dexie version(...) when adding columns, or old installs lose data"},{"?":"Verify index fields match the queries in useTransactions.ts"},{"?":"Confirm v1→v2 migration adds only the empty budgets table (old installs upgrade losslessly)"},{"*":"Adding a required field breaks CSV import, forms, and repository writes — check all"}]} */
 
 import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
@@ -23,15 +23,30 @@ export interface Category {
   color: string | null;
 }
 
+export interface Budget {
+  id: string;
+  amount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export const OVERALL_BUDGET_ID = "overall";
+
 class DB extends Dexie {
   transactions!: Table<Transaction, string>;
   categories!: Table<Category, string>;
+  budgets!: Table<Budget, string>;
 
   constructor() {
     super("cash-guard");
     this.version(1).stores({
       transactions: "id, type, category, date, createdAt",
       categories: "id, type, name",
+    });
+    this.version(2).stores({
+      transactions: "id, type, category, date, createdAt",
+      categories: "id, type, name",
+      budgets: "id",
     });
   }
 }

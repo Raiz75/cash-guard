@@ -1,11 +1,12 @@
-/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/db/repository.ts — CRUD, category rename cascade, type-lock, and CSV import dedupe/atomicity. Uses an in-memory mock of the Dexie `db` (via vi.mock of schema.ts) so no IndexedDB is needed.","IDD":[{"?":"db.transaction('rw', ...) mock invokes the callback so rw logic inside importTransactions/updateCategory runs"},{"?":"Mock tables track in-memory state and expose where().equals().count()/modify() for cascade tests"},{"?":"newId and types are kept real via importOriginal; only `db` is replaced"},{"?":"Repository is the sole write path — tests assert it never mutates state on skipped imports"}],"A":[{"!!!":"lib/db/repository.ts","exercised by these tests","CRITICAL":"type-lock / rename cascade must not regress"},{"!":"lib/validations/transaction.ts","rows are safeParse'd by importTransactions"},{"?":"lib/csv.ts","CsvRow is the import shape"}],"AB":[{"?":"dexie version","any API change to Table.where chaining would need mock updates"}],"E":[{"!!":"npm test repository"},{"?":"Empty/all-skipped imports return imported=0 with no partial writes"},{"*":"updateCategory type-change with existing transactions throws before touching the DB"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/db/repository.ts — CRUD, category rename cascade, type-lock, CSV import dedupe/atomicity, overall-budget get/set, and monthly-spend summation. Uses an in-memory mock of the Dexie `db` (via vi.mock of schema.ts) so no IndexedDB is needed.","IDD":[{"?":"db.transaction('rw', ...) mock invokes the callback so rw logic inside importTransactions/updateCategory runs"},{"?":"Mock tables track in-memory state and expose where().equals().count()/modify(), between().toArray(), and put() (upsert) for cascade/range/budget tests"},{"?":"newId and types are kept real via importOriginal; only `db` is replaced"},{"?":"Repository is the sole write path — tests assert it never mutates state on skipped imports"},{"?":"getMonthlySpent tests pin time via vi.useFakeTimers/setSystemTime so monthRange() is deterministic"}],"A":[{"!!!":"lib/db/repository.ts","exercised by these tests","CRITICAL":"type-lock / rename cascade must not regress"},{"!":"lib/validations/transaction.ts","rows are safeParse'd by importTransactions"},{"?":"lib/csv.ts","CsvRow is the import shape"},{"?":"lib/db/schema.ts","OVERALL_BUDGET_ID and Budget shape asserted via setBudget/getBudget tests"}],"AB":[{"?":"dexie version","any API change to Table.where chaining would need mock updates"},{"?":"vitest fake timers","system-time mocking behavior affects getMonthlySpent cases"}],"E":[{"!!":"npm test -- tests/repository.test.ts"},{"?":"setBudget preserves createdAt while refreshing updatedAt; single 'overall' row"},{"?":"getMonthlySpent sums only current-month expenses (0 when none)"},{"?":"Empty/all-skipped imports return imported=0 with no partial writes"},{"*":"updateCategory type-change with existing transactions throws before touching the DB"}]} */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- In-memory mock of the Dexie db ---------------------------------------
 // vi.hoisted guarantees mockDb/stores exist before vi.mock factories run.
-const { mockDb, transactionsStore, categoriesStore } = vi.hoisted(() => {
+const { mockDb, transactionsStore, categoriesStore, budgetsStore } = vi.hoisted(() => {
   const transactionsStore: Array<{ id: string; [key: string]: unknown }> = [];
   const categoriesStore: Array<{ id: string; [key: string]: unknown }> = [];
+  const budgetsStore: Array<{ id: string; [key: string]: unknown }> = [];
 
   function makeTable<T extends { id: string }>(store: T[]) {
     return {
@@ -13,6 +14,12 @@ const { mockDb, transactionsStore, categoriesStore } = vi.hoisted(() => {
       add: vi.fn(async (item: T) => {
         store.push(item);
         return item;
+      }),
+      put: vi.fn(async (item: T) => {
+        const i = store.findIndex((x) => x.id === item.id);
+        if (i >= 0) store[i] = item;
+        else store.push(item);
+        return item.id;
       }),
       update: vi.fn(async (id: string, changes: Partial<T>) => {
         const rec = store.find((x) => x.id === id);
@@ -37,6 +44,18 @@ const { mockDb, transactionsStore, categoriesStore } = vi.hoisted(() => {
             }
           }),
         })),
+        between: vi.fn(
+          (lo: unknown, hi: unknown, incLo = true, incHi = true) => ({
+            toArray: vi.fn(async () =>
+              store.filter((x) => {
+                const v = x[field] as string;
+                const l = lo as string;
+                const h = hi as string;
+                return (incLo ? v >= l : v > l) && (incHi ? v <= h : v < h);
+              })
+            ),
+          })
+        ),
       })),
     };
   }
@@ -44,13 +63,14 @@ const { mockDb, transactionsStore, categoriesStore } = vi.hoisted(() => {
   const db = {
     transactions: makeTable(transactionsStore),
     categories: makeTable(categoriesStore),
+    budgets: makeTable(budgetsStore),
     transaction: vi.fn(async (_mode: string, ...args: unknown[]) => {
       const cb = args[args.length - 1];
       if (typeof cb === "function") return cb();
     }),
   };
 
-  return { mockDb: db, transactionsStore, categoriesStore };
+  return { mockDb: db, transactionsStore, categoriesStore, budgetsStore };
 });
 
 vi.mock("@/lib/db/schema", async (importOriginal) => {
@@ -70,11 +90,15 @@ import {
   importTransactions,
   transactionCountForCategory,
   reassignCategory,
+  getBudget,
+  setBudget,
+  getMonthlySpent,
 } from "@/lib/db/repository";
 
 beforeEach(() => {
   transactionsStore.length = 0;
   categoriesStore.length = 0;
+  budgetsStore.length = 0;
   vi.clearAllMocks();
 });
 
@@ -304,5 +328,57 @@ describe("importTransactions", () => {
     expect(result.imported).toBe(1);
     expect(result.createdCategories).toEqual([]);
     expect(transactionsStore[0].category).toBe("Food");
+  });
+});
+
+describe("setBudget/getBudget", () => {
+  it("returns null when no budget has been set", async () => {
+    expect(await getBudget()).toBeNull();
+  });
+
+  it("inserts the overall budget", async () => {
+    await setBudget(20000);
+    const budget = await getBudget();
+    expect(budget).toMatchObject({ id: "overall", amount: 20000 });
+    expect(budgetsStore).toHaveLength(1);
+  });
+
+  it("updates in place and preserves createdAt", async () => {
+    await setBudget(20000);
+    const first = await getBudget();
+    await setBudget(25000);
+    const second = await getBudget();
+    expect(second!.amount).toBe(25000);
+    expect(second!.createdAt).toBe(first!.createdAt);
+    expect(second!.updatedAt).toBeGreaterThanOrEqual(second!.createdAt);
+    expect(budgetsStore).toHaveLength(1);
+  });
+});
+
+describe("getMonthlySpent", () => {
+  it("sums current-month expenses only", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 15)); // Aug 15 2026 -> month 2026-08-01..31
+    try {
+      await addTransaction({ type: "expense", amount: 100, category: "Food", date: "2026-08-01" });
+      await addTransaction({ type: "expense", amount: 40, category: "Food", date: "2026-08-31" });
+      await addTransaction({ type: "expense", amount: 999, category: "Rent", date: "2026-07-31" });
+      await addTransaction({ type: "expense", amount: 888, category: "Rent", date: "2026-09-01" });
+      await addTransaction({ type: "income", amount: 5000, category: "Salary", date: "2026-08-05" });
+      expect(await getMonthlySpent()).toBe(140);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("returns 0 when there are no expenses this month", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 15));
+    try {
+      await addTransaction({ type: "income", amount: 5000, category: "Salary", date: "2026-08-05" });
+      expect(await getMonthlySpent()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
