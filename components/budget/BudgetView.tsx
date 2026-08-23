@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs monthly limit with a tier-colored Progress bar, empty state, and the set/edit BudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"?":"Bar color by tier: primary below 75%, amber-500 75-89%, destructive >=90 (spec-approved exception)"},{"!!":"Three-state loading: budget undefined = query pending (Loading…), null = no row ('No budget yet' empty state), Budget = summary — loading = budget === undefined || spent === undefined, so !budget after load is always the empty state"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/BudgetDialog.tsx","opened for set/edit"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget row exists"}],"AB":[{"?":"lib/hooks/useBudget.ts","useBudget + useMonthlySpent; useBudget's null/undefined contract drives the branches here"},{"?":"lib/budget.ts","budgetTier drives color/hint"},{"?":"lib/format.ts","formatPeso"},{"?":"components/shared (Header, BottomNav)","shell"},{"?":"components/ui/progress.tsx","indicatorClassName prop"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/budgetView.test.ts","empty state must be reachable on fresh installs (no budget row)"},{"?":"Empty state before first budget; negative remaining renders via formatPeso"},{"*":"Over-budget shows destructive text and red bar"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs monthly limit with a tier-colored Progress bar, empty state, and the set/edit BudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: budget undefined = query pending (Loading…), null = no row ('No budget yet' empty state), Budget = summary — loading = budget === undefined || spent === undefined, so !budget after load is always the empty state"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/BudgetDialog.tsx","opened for set/edit"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget row exists"}],"AB":[{"!!!":"components/budget/tierStyles.ts","supplies BAR_COLOR/HINT_COLOR/HINT_TEXT keyed by BudgetTier — class/copy changes here change what this screen renders"},{"?":"lib/hooks/useBudget.ts","useBudget + useMonthlySpent; useBudget's null/undefined contract drives the branches here"},{"?":"lib/budget.ts","budgetTier drives color/hint"},{"?":"lib/format.ts","formatPeso"},{"?":"components/shared (Header, BottomNav)","shell"},{"?":"components/ui/progress.tsx","indicatorClassName prop"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/budgetView.test.ts","empty state must be reachable on fresh installs (no budget row)"},{"?":"Empty state before first budget; negative remaining renders via formatPeso"},{"*":"Over-budget shows destructive text and red bar"}]} */
 
 "use client";
 
@@ -12,33 +12,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BudgetDialog } from "@/components/budget/BudgetDialog";
 import { useBudget, useMonthlySpent } from "@/lib/hooks/useBudget";
-import { budgetTier, type BudgetTier } from "@/lib/budget";
+import { budgetTier } from "@/lib/budget";
+import { BAR_COLOR, HINT_COLOR, HINT_TEXT } from "@/components/budget/tierStyles";
 import { formatPeso } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const BAR_COLOR: Record<BudgetTier, string> = {
-  ok: "bg-primary",
-  warn50: "bg-primary",
-  warn75: "bg-amber-500",
-  warn90: "bg-destructive",
-  over: "bg-destructive",
-};
-
-const HINT_COLOR: Record<BudgetTier, string> = {
-  ok: "text-muted-foreground",
-  warn50: "text-muted-foreground",
-  warn75: "text-amber-600 dark:text-amber-400",
-  warn90: "font-medium text-destructive",
-  over: "font-medium text-destructive",
-};
-
-const HINT_TEXT: Record<BudgetTier, string> = {
-  ok: "",
-  warn50: "Halfway there — watch your spending.",
-  warn75: "Getting close to your limit.",
-  warn90: "Almost at your limit!",
-  over: "You're over budget this month.",
-};
 
 export function BudgetView() {
   const budget = useBudget();

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { budgetTier, crossedTier, BUDGET_TIER_MESSAGES } from "@/lib/budget";
+import { budgetTier, crossedTier, budgetTierMessage, BUDGET_TIER_MESSAGES } from "@/lib/budget";
 import { budgetSchema } from "@/lib/validations/budget";
 
 describe("budgetTier", () => {
@@ -73,6 +73,20 @@ describe("BUDGET_TIER_MESSAGES", () => {
     expect(BUDGET_TIER_MESSAGES.warn75).toContain("75%");
     expect(BUDGET_TIER_MESSAGES.warn90).toContain("90%");
     expect(BUDGET_TIER_MESSAGES.over).toContain("exceeded");
+  });
+});
+
+describe("budgetTierMessage", () => {
+  it("uses generic monthly copy without a label", () => {
+    expect(budgetTierMessage("warn50")).toBe("You've used 50% of your monthly budget");
+    expect(budgetTierMessage("warn90")).toBe("You've used 90% of your monthly budget");
+    expect(budgetTierMessage("over")).toBe("You've exceeded your monthly budget");
+  });
+
+  it("interpolates the category label", () => {
+    expect(budgetTierMessage("warn50", "Food")).toBe("You've used 50% of your Food budget");
+    expect(budgetTierMessage("warn75", "Transport")).toBe("You've used 75% of your Transport budget");
+    expect(budgetTierMessage("over", "Food")).toBe("You've exceeded your Food budget");
   });
 });
 
