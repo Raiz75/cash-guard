@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { budgetTier, crossedTier, BUDGET_TIER_MESSAGES } from "@/lib/budget";
+import { budgetSchema } from "@/lib/validations/budget";
 
 describe("budgetTier", () => {
   it("returns ok below 50%", () => {
@@ -72,5 +73,21 @@ describe("BUDGET_TIER_MESSAGES", () => {
     expect(BUDGET_TIER_MESSAGES.warn75).toContain("75%");
     expect(BUDGET_TIER_MESSAGES.warn90).toContain("90%");
     expect(BUDGET_TIER_MESSAGES.over).toContain("exceeded");
+  });
+});
+
+describe("budgetSchema", () => {
+  it("accepts a positive amount", () => {
+    expect(budgetSchema.safeParse({ amount: 20000 }).success).toBe(true);
+  });
+
+  it("coerces numeric strings", () => {
+    const parsed = budgetSchema.safeParse({ amount: "1500" });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.amount).toBe(1500);
+  });
+
+  it.each([0, -1])("rejects non-positive amount %s", (amount) => {
+    expect(budgetSchema.safeParse({ amount }).success).toBe(false);
   });
 });
