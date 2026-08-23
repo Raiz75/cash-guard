@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, spending-by-category breakdown with range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Spending breakdown computed client-side from useTransactions, filtered by rangeStartISO; bar colors use category color or --primary fallback"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/format.ts","formatPeso, rangeStartISO, DateRange"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify SW registers only in production; breakdown math and bar widths correct"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useBudget, useMonthlySpent feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, DateRange"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
 
 "use client";
 
@@ -20,6 +20,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useBudget, useMonthlySpent } from "@/lib/hooks/useBudget";
+import { budgetTier } from "@/lib/budget";
+import { BAR_COLOR } from "@/components/budget/tierStyles";
+import { SpendingDonut } from "@/components/dashboard/SpendingDonut";
+import { buildSpendingSlices, slicePercent } from "@/lib/spending";
+import { Progress } from "@/components/ui/progress";
 
 export function DashboardView() {
   useEffect(() => {
@@ -45,11 +51,11 @@ export function DashboardView() {
       expenseByCategory.set(t.category, (expenseByCategory.get(t.category) ?? 0) + t.amount);
     }
   }
-  const breakdown = [...expenseByCategory.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-  const maxExpense = breakdown.length ? breakdown[0][1] : 0;
   const totalSpent = [...expenseByCategory.values()].reduce((s, amount) => s + amount, 0);
+  const budget = useBudget();
+  const monthlySpent = useMonthlySpent();
+  const slices = buildSpendingSlices([...expenseByCategory.entries()], categories);
+  const legend = [...expenseByCategory.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col pb-20">
@@ -87,35 +93,44 @@ export function DashboardView() {
             </div>
           </CardHeader>
           <CardContent>
-            {breakdown.length === 0 ? (
+            {budget && monthlySpent !== undefined ? (
+              (() => {
+                const { pct, tier } = budgetTier(monthlySpent, budget.amount);
+                return (
+                  <div className="mb-4 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Monthly budget</span>
+                      <span className="tabular-nums">
+                        {formatPeso(monthlySpent)} of {formatPeso(budget.amount)} · {Math.round(pct)}% used
+                      </span>
+                    </div>
+                    <Progress value={Math.min(pct, 100)} indicatorClassName={BAR_COLOR[tier]} />
+                  </div>
+                );
+              })()
+            ) : null}
+            {slices.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No expenses in this period.</p>
             ) : (
-              <div className="space-y-2.5">
-                {breakdown.map(([name, amount]) => {
-                  const cat = categories.find((c) => c.name === name);
-                  const pct = maxExpense ? Math.round((amount / maxExpense) * 100) : 0;
-                  return (
-                    <div key={name}>
-                      <div className="flex justify-between text-xs">
-                        <span className="inline-flex items-center gap-1 font-medium">
+              <>
+                <SpendingDonut slices={slices} total={totalSpent} />
+                <div className="mt-4 space-y-2">
+                  {legend.map(([name, amount]) => {
+                    const cat = categories.find((c) => c.name === name);
+                    return (
+                      <div key={name} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="inline-flex min-w-0 items-center gap-1 font-medium">
                           <CategoryIcon name={cat?.icon ?? null} className="h-3.5 w-3.5 text-muted-foreground" />
-                          {name}
+                          <span className="truncate">{name}</span>
                         </span>
-                        <span>{formatPeso(amount)}</span>
+                        <span className="shrink-0 tabular-nums">
+                          {formatPeso(amount)} · {slicePercent(amount, totalSpent)}%
+                        </span>
                       </div>
-                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${pct}%`,
-                            backgroundColor: cat?.color ?? "var(--primary)",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
