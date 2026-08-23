@@ -344,14 +344,13 @@ describe("setBudget/getBudget", () => {
   });
 
   it("updates in place and preserves createdAt", async () => {
-    await setBudget(20000);
-    const first = await getBudget();
+    budgetsStore.push({ id: "overall", amount: 1, createdAt: 1000, updatedAt: 1000 });
     await setBudget(25000);
     const second = await getBudget();
-    expect(second!.amount).toBe(25000);
-    expect(second!.createdAt).toBe(first!.createdAt);
-    expect(second!.updatedAt).toBeGreaterThanOrEqual(second!.createdAt);
     expect(budgetsStore).toHaveLength(1);
+    expect(second!.amount).toBe(25000);
+    expect(second!.createdAt).toBe(1000);
+    expect(second!.updatedAt).toBeGreaterThan(1000);
   });
 });
 
