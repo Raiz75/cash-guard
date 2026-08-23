@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useBudget, useMonthlySpent feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, DateRange"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc, each row leading with a color dot matching its slice fill; card header has no Total row because the donut center shows the total — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useBudget, useMonthlySpent feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, DateRange"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
 
 "use client";
 
@@ -55,7 +55,6 @@ export function DashboardView() {
   const budget = useBudget();
   const monthlySpent = useMonthlySpent();
   const slices = buildSpendingSlices([...expenseByCategory.entries()], categories);
-  const legend = [...expenseByCategory.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col pb-20">
@@ -87,10 +86,6 @@ export function DashboardView() {
           <CardHeader>
             <CardTitle className="text-sm">Spending by category</CardTitle>
             <RangeFilter value={range} onChange={setRange} />
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-semibold">{formatPeso(totalSpent)}</span>
-            </div>
           </CardHeader>
           <CardContent>
             {budget && monthlySpent !== undefined ? (
@@ -115,16 +110,20 @@ export function DashboardView() {
               <>
                 <SpendingDonut slices={slices} total={totalSpent} />
                 <div className="mt-4 space-y-2">
-                  {legend.map(([name, amount]) => {
-                    const cat = categories.find((c) => c.name === name);
+                  {slices.map((slice) => {
+                    const cat = categories.find((c) => c.name === slice.name);
                     return (
-                      <div key={name} className="flex items-center justify-between gap-2 text-xs">
+                      <div key={slice.name} className="flex items-center justify-between gap-2 text-xs">
                         <span className="inline-flex min-w-0 items-center gap-1 font-medium">
+                          <span
+                            className="h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: slice.fill }}
+                          />
                           <CategoryIcon name={cat?.icon ?? null} className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="truncate">{name}</span>
+                          <span className="truncate">{slice.name}</span>
                         </span>
                         <span className="shrink-0 tabular-nums">
-                          {formatPeso(amount)} · {slicePercent(amount, totalSpent)}%
+                          {formatPeso(slice.value)} · {slicePercent(slice.value, totalSpent)}%
                         </span>
                       </div>
                     );
