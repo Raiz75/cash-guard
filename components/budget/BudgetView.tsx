@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs monthly limit with a tier-colored Progress bar, empty state, and a Breakdown card listing per-category budgets (spent-vs-allotted rows with tier hints, Edit/Remove actions) plus the set/edit BudgetDialog and CategoryBudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: budget undefined = query pending (Loading…), null = no row ('No budget yet' empty state), Budget = summary — loading = budget === undefined || spent === undefined, so !budget after load is always the empty state"},{"!!":"Add breakdown stays disabled until an overall budget exists (!budget || loading); breakdown row ids parse via parseCategoryBudgetId and unknown category ids render null"},{"?":"Two independent dialog states: dialogOpen drives BudgetDialog only (pre-existing Set/Edit budget flows); catDialogOpen drives CategoryBudgetDialog only (Add/Edit breakdown) — never share one open flag across two controlled dialogs or both mount open; editing distinguishes Add (Select free) from Edit (Select locked); dialog gets only unallocated expense categories since edit mode displays via watchCategory"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/BudgetDialog.tsx","opened for set/edit overall budget"},{"!!":"components/budget/CategoryBudgetDialog.tsx","opened for add/edit breakdown"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget row exists"},{"?":"tests/categoryBudgetView.test.ts","asserts breakdown gating, row content, tier hint, Edit/Remove"}],"AB":[{"!!!":"components/budget/tierStyles.ts","supplies BAR_COLOR/HINT_COLOR/HINT_TEXT keyed by BudgetTier — class/copy changes here change what this screen renders"},{"?":"lib/hooks/useBudget.ts","all four hooks; useBudget's null/undefined contract drives the branches here"},{"?":"lib/hooks/useTransactions.ts","useCategories supplies names/icons for rows and unallocated options"},{"?":"lib/db/schema.ts","parseCategoryBudgetId + Category type"},{"?":"lib/db/repository.ts","deleteCategoryBudget for Remove"},{"?":"lib/budget.ts","budgetTier drives color/hint per row"},{"?":"lib/format.ts","formatPeso"},{"?":"components/shared (Header, BottomNav)","shell"},{"?":"components/ui/progress.tsx","indicatorClassName prop"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/budgetView.test.ts","empty state must be reachable on fresh installs (no budget row)"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","breakdown gating + row rendering must stay green"},{"?":"Empty state before first budget; negative remaining renders via formatPeso"},{"*":"Over-budget shows destructive text and red bar; spent-by-category keys are category NAMES"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs monthly limit with a tier-colored Progress bar, empty state, and a Breakdown card listing per-category budgets (spent-vs-allotted rows with tier hints, Edit/Remove actions) plus the set/edit BudgetDialog and CategoryBudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: budget undefined = query pending (Loading…), null = no row ('No budget yet' empty state), Budget = summary — loading = budget === undefined || spent === undefined, so !budget after load is always the empty state; Breakdown hint renders only when budget === null (never while undefined/loading)"},{"!!":"Add breakdown stays disabled until an overall budget exists (!budget || loading); breakdown rows join ids via parseCategoryBudgetId then sort by category name (localeCompare) before rendering; unknown ids are dropped"},{"?":"Two independent dialog states: dialogOpen drives BudgetDialog only (pre-existing Set/Edit budget flows); catDialogOpen drives CategoryBudgetDialog only (Add/Edit breakdown) — never share one open flag across two controlled dialogs or both mount open; editing distinguishes Add (Select free) from Edit (Select locked); dialog gets only unallocated expense categories since edit mode displays via watchCategory"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/BudgetDialog.tsx","opened for set/edit overall budget"},{"!!":"components/budget/CategoryBudgetDialog.tsx","opened for add/edit breakdown"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget row exists"},{"?":"tests/categoryBudgetView.test.ts","asserts breakdown gating, row content, tier hint, Edit/Remove"}],"AB":[{"!!!":"components/budget/tierStyles.ts","supplies BAR_COLOR/HINT_COLOR/HINT_TEXT keyed by BudgetTier — class/copy changes here change what this screen renders"},{"?":"lib/hooks/useBudget.ts","all four hooks; useBudget's null/undefined contract drives the branches here"},{"?":"lib/hooks/useTransactions.ts","useCategories supplies names/icons for rows and unallocated options"},{"?":"lib/db/schema.ts","parseCategoryBudgetId + Category type"},{"?":"lib/db/repository.ts","deleteCategoryBudget for Remove"},{"?":"lib/budget.ts","budgetTier drives color/hint per row"},{"?":"lib/format.ts","formatPeso"},{"?":"components/shared (Header, BottomNav)","shell"},{"?":"components/ui/progress.tsx","indicatorClassName prop"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/budgetView.test.ts","empty state must be reachable on fresh installs (no budget row)"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","breakdown gating + row rendering must stay green"},{"?":"Empty state before first budget ('Set a monthly budget first' only when budget===null, never while loading); rows sorted by category name; negative remaining renders via formatPeso"},{"*":"Over-budget shows destructive text and red bar; spent-by-category keys are category NAMES"}]} */
 
 "use client";
 
@@ -48,6 +48,13 @@ export function BudgetView() {
   const unallocated = allCategories.filter(
     (c) => c.type === "expense" && !catBudgets.some((b) => parseCategoryBudgetId(b.id) === c.id)
   );
+
+  const breakdownRows = catBudgets
+    .flatMap((b) => {
+      const cat = allCategories.find((c) => c.id === parseCategoryBudgetId(b.id));
+      return cat ? [{ b, cat }] : [];
+    })
+    .sort((a, z) => a.cat.name.localeCompare(z.cat.name));
 
   const remove = async (cat: Category) => {
     try {
@@ -141,7 +148,7 @@ export function BudgetView() {
             </Button>
           </CardHeader>
           <CardContent>
-            {!budget ? (
+            {budget === null ? (
               <p className="text-xs text-muted-foreground">Set a monthly budget first</p>
             ) : catBudgets.length === 0 ? (
               <p className="py-4 text-center text-xs text-muted-foreground">
@@ -149,10 +156,7 @@ export function BudgetView() {
               </p>
             ) : (
               <div className="space-y-3">
-                {catBudgets.map((b) => {
-                  const cid = parseCategoryBudgetId(b.id)!;
-                  const cat = allCategories.find((c) => c.id === cid);
-                  if (!cat) return null;
+                {breakdownRows.map(({ b, cat }) => {
                   const spent = spentByCat[cat.name] ?? 0;
                   const { pct, tier } = budgetTier(spent, b.amount);
                   return (
@@ -178,7 +182,7 @@ export function BudgetView() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setEditing({ categoryId: cid, name: cat.name });
+                              setEditing({ categoryId: cat.id, name: cat.name });
                               setCatDialogOpen(true);
                             }}
                           >

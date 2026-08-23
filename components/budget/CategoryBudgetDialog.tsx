@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Dialog (RHF + Zod) to add or edit one category breakdown budget, calling repository.setCategoryBudget and showing its allocation-cap errors inline instead of a toast.","IDD":[{"!!":"Editing locks the Select (disabled={Boolean(editing)}) because the row id is cat:<categoryId> — changing category would be a different row"},{"?":"form.reset on open re-syncs defaults from props.editing without remount tricks; open/close controlled by parent"},{"!!":"Repository errors (e.g. 'Exceeds the monthly budget — only ₱X left unallocated') go to form.setError('root') and render as an inline destructive paragraph — never a toast"},{"?":"Parent passes only unallocated expense categories; in edit mode watchCategory still displays via the Select value"}],"A":[{"!!!":"components/budget/BudgetView.tsx","opens this dialog for Add breakdown and per-row Edit; supplies categories + editing"}],"AB":[{"!!":"lib/validations/budget.ts","categoryBudgetSchema + CategoryBudgetInput drive resolver and types"},{"!!":"lib/db/repository.ts","setCategoryBudget throws allocation-guard messages surfaced verbatim inline"},{"?":"components/ui/dialog.tsx + select","Base UI primitives; Select value/onValueChange coerced with ?? \"\"/?? null guards"},{"?":"lib/db/schema.ts","Category type shapes the select options"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","BudgetView gating around this dialog's mount"},{"?":"Over-allocation attempt must render the repository message inline and keep the dialog open"},{"*":"Success path: toast 'Category budget saved' + close; blank category shows 'Choose a category'"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Dialog (RHF + Zod) to add or edit one category breakdown budget, calling repository.setCategoryBudget and showing its allocation-cap errors inline instead of a toast.","IDD":[{"!!":"Editing locks the Select (disabled={Boolean(editing)}) because the row id is cat:<categoryId> — changing category would be a different row"},{"?":"form.reset on open re-syncs defaults from props.editing without remount tricks; open/close controlled by parent"},{"!!":"Repository errors (e.g. 'Exceeds the monthly budget — only ₱X left unallocated') go to form.setError('root') and render as an inline destructive paragraph — never a toast"},{"?":"Parent passes only unallocated expense categories; in edit mode watchCategory still displays via the Select value"},{"!!":"items map on Select Root (editing id→name prepended, then categories) lets Base UI resolve SelectValue labels — omitting it renders the raw categoryId/UUID in the trigger"}],"A":[{"!!!":"components/budget/BudgetView.tsx","opens this dialog for Add breakdown and per-row Edit; supplies categories + editing"}],"AB":[{"!!":"lib/validations/budget.ts","categoryBudgetSchema + CategoryBudgetInput drive resolver and types"},{"!!":"lib/db/repository.ts","setCategoryBudget throws allocation-guard messages surfaced verbatim inline"},{"?":"components/ui/dialog.tsx + select","Base UI primitives; Select value/onValueChange coerced with ?? \"\"/?? null guards"},{"?":"lib/db/schema.ts","Category type shapes the select options"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","BudgetView gating + dialog select-label cases (add-mode pick and edit-mode preset show the name, never an id) around this dialog's mount"},{"?":"Over-allocation attempt must render the repository message inline and keep the dialog open"},{"*":"Success path: toast 'Category budget saved' + close; blank category shows 'Choose a category'"}]} */
 "use client";
 
 import { useEffect } from "react";
@@ -58,6 +58,11 @@ export function CategoryBudgetDialog({ open, onOpenChange, categories, editing }
 
   const watchCategory = useWatch({ control: form.control, name: "categoryId" }) ?? "";
 
+  const items = Object.fromEntries([
+    ...(editing ? [[editing.categoryId, editing.name] as const] : []),
+    ...categories.map((c) => [c.id, c.name] as const),
+  ]);
+
   const onSubmit = async (data: CategoryBudgetInput) => {
     try {
       await setCategoryBudget(data.categoryId, data.amount);
@@ -84,6 +89,7 @@ export function CategoryBudgetDialog({ open, onOpenChange, categories, editing }
           <div className="space-y-1.5">
             <Label htmlFor="cb-category">Category</Label>
             <Select
+              items={items}
               value={watchCategory}
               disabled={Boolean(editing)}
               onValueChange={(v) => form.setValue("categoryId", v ?? "")}

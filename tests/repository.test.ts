@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/db/repository.ts — CRUD, category rename cascade, type-lock, CSV import dedupe/atomicity, overall-budget get/set with allocation guards, namespaced cat:<id> budget rows, deleteCategory cascade, and monthly-spend summation (total and per-category). Uses an in-memory mock of the Dexie `db` (via vi.mock of schema.ts) so no IndexedDB is needed.","IDD":[{"?":"db.transaction('rw', ...) mock invokes the callback so rw logic inside importTransactions/updateCategory runs"},{"?":"Mock tables track in-memory state and expose where().equals().count()/modify(), between().toArray(), and put() (upsert) for cascade/range/budget tests"},{"?":"newId and types are kept real via importOriginal; only `db` is replaced"},{"?":"Repository is the sole write path — tests assert it never mutates state on skipped imports"},{"?":"getMonthlySpent tests pin time via vi.useFakeTimers/setSystemTime so monthRange() is deterministic"}],"A":[{"!!!":"lib/db/repository.ts","exercised by these tests","CRITICAL":"type-lock / rename cascade must not regress"},{"!":"lib/validations/transaction.ts","rows are safeParse'd by importTransactions"},{"?":"lib/csv.ts","CsvRow is the import shape"},{"?":"lib/db/schema.ts","OVERALL_BUDGET_ID and Budget shape asserted via setBudget/getBudget tests"}],"AB":[{"?":"dexie version","any API change to Table.where chaining would need mock updates"},{"?":"vitest fake timers","system-time mocking behavior affects getMonthlySpent cases"},{"?":"lib/format.ts","monthRange() pins the current-month window asserted by getMonthlySpentByCategory"}],"E":[{"!!":"npm test -- tests/repository.test.ts"},{"!!":"setCategoryBudget guards: rejects without overall budget, rejects over-allocation, allows exactly-equal totals, preserves createdAt on edit"},{"!!":"setBudget allocation guard: rejects lowering below allocated total, allows equal; deleteCategory cascades its cat:<id> row"},{"?":"setBudget preserves createdAt while refreshing updatedAt; single 'overall' row"},{"?":"getMonthlySpent sums only current-month expenses (0 when none)"},{"?":"getMonthlySpentByCategory keys by category name, expenses only"},{"?":"Empty/all-skipped imports return imported=0 with no partial writes"},{"*":"updateCategory type-change with existing transactions throws before touching the DB"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/db/repository.ts — CRUD, category rename cascade, type-lock, CSV import dedupe/atomicity, overall-budget get/set with allocation guards, namespaced cat:<id> budget rows, deleteCategory cascade, and monthly-spend summation (total and per-category). Uses an in-memory mock of the Dexie `db` (via vi.mock of schema.ts) so no IndexedDB is needed.","IDD":[{"?":"db.transaction('rw', ...) mock invokes the callback so rw logic inside importTransactions/updateCategory runs"},{"?":"Mock tables track in-memory state and expose where().equals().count()/modify(), between().toArray(), and put() (upsert) for cascade/range/budget tests"},{"?":"newId and types are kept real via importOriginal; only `db` is replaced"},{"?":"Repository is the sole write path — tests assert it never mutates state on skipped imports"},{"?":"getMonthlySpent tests pin time via vi.useFakeTimers/setSystemTime so monthRange() is deterministic"}],"A":[{"!!!":"lib/db/repository.ts","exercised by these tests","CRITICAL":"type-lock / rename cascade must not regress"},{"!":"lib/validations/transaction.ts","rows are safeParse'd by importTransactions"},{"?":"lib/csv.ts","CsvRow is the import shape"},{"?":"lib/db/schema.ts","OVERALL_BUDGET_ID and Budget shape asserted via setBudget/getBudget tests"}],"AB":[{"?":"dexie version","any API change to Table.where chaining would need mock updates"},{"?":"vitest fake timers","system-time mocking behavior affects getMonthlySpent cases"},{"?":"lib/format.ts","monthRange() pins the current-month window asserted by getMonthlySpentByCategory"}],"E":[{"!!":"npm test -- tests/repository.test.ts"},{"!!":"setCategoryBudget guards: rejects without overall budget, rejects over-allocation, allows exactly-equal totals, preserves createdAt on edit"},{"!!":"setBudget allocation guard: rejects lowering below allocated total, allows equal; deleteCategory cascades its cat:<id> row"},{"!!":"amount guards: zero and negative amounts are rejected by both setters ('Amount must be greater than 0') with no writes"},{"?":"setBudget preserves createdAt while refreshing updatedAt; single 'overall' row"},{"?":"getMonthlySpent sums only current-month expenses (0 when none)"},{"?":"getMonthlySpentByCategory keys by category name, expenses only"},{"?":"Empty/all-skipped imports return imported=0 with no partial writes"},{"*":"updateCategory type-change with existing transactions throws before touching the DB"}]} */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- In-memory mock of the Dexie db ---------------------------------------
@@ -446,6 +446,29 @@ describe("setBudget allocation guard", () => {
     await expect(setBudget(5000)).rejects.toThrow(/already allocated/);
     await setBudget(7000);
     expect((await getBudget())!.amount).toBe(7000);
+  });
+});
+
+describe("amount guards", () => {
+  it("rejects zero amounts in both setters without writing", async () => {
+    await setBudget(10000);
+    await expect(setBudget(0)).rejects.toThrow("Amount must be greater than 0");
+    await expect(setCategoryBudget("a", 0)).rejects.toThrow(
+      "Amount must be greater than 0"
+    );
+    expect((await getBudget())!.amount).toBe(10000);
+    expect(await getCategoryBudgets()).toHaveLength(0);
+  });
+
+  it("rejects negative amounts in both setters before other guards run", async () => {
+    await expect(setBudget(-500)).rejects.toThrow(
+      "Amount must be greater than 0"
+    );
+    await expect(setCategoryBudget("a", -500)).rejects.toThrow(
+      "Amount must be greater than 0"
+    );
+    expect(await getBudget()).toBeNull();
+    expect(await getCategoryBudgets()).toHaveLength(0);
   });
 });
 
