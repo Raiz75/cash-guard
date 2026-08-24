@@ -9,7 +9,7 @@ self.addEventListener("install", (event) => {
       cache.addAll([
         "/",
         "/manifest.webmanifest",
-        "/images/android/launchericon-512x512.png",
+        "/images/launchericon-512x512.png",
       ])
     )
   );
