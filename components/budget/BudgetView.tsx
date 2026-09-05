@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs monthly limit with a tier-colored Progress bar, empty state, and a Breakdown card listing per-category budgets (spent-vs-allotted rows with tier hints, Edit/Remove actions) plus the set/edit BudgetDialog and CategoryBudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: budget undefined = query pending (Loading…), null = no row ('No budget yet' empty state), Budget = summary — loading = budget === undefined || spent === undefined, so !budget after load is always the empty state; Breakdown hint renders only when budget === null (never while undefined/loading)"},{"!!":"Add breakdown stays disabled until an overall budget exists (!budget || loading); breakdown rows join ids via parseCategoryBudgetId then sort by category name (localeCompare) before rendering; unknown ids are dropped"},{"?":"Two independent dialog states: dialogOpen drives BudgetDialog only (pre-existing Set/Edit budget flows); catDialogOpen drives CategoryBudgetDialog only (Add/Edit breakdown) — never share one open flag across two controlled dialogs or both mount open; editing distinguishes Add (Select free) from Edit (Select locked); dialog gets only unallocated expense categories since edit mode displays via watchCategory"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/BudgetDialog.tsx","opened for set/edit overall budget"},{"!!":"components/budget/CategoryBudgetDialog.tsx","opened for add/edit breakdown"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget row exists"},{"?":"tests/categoryBudgetView.test.ts","asserts breakdown gating, row content, tier hint, Edit/Remove"}],"AB":[{"!!!":"components/budget/tierStyles.ts","supplies BAR_COLOR/HINT_COLOR/HINT_TEXT keyed by BudgetTier — class/copy changes here change what this screen renders"},{"?":"lib/hooks/useBudget.ts","all four hooks; useBudget's null/undefined contract drives the branches here"},{"?":"lib/hooks/useTransactions.ts","useCategories supplies names/icons for rows and unallocated options"},{"?":"lib/db/schema.ts","parseCategoryBudgetId + Category type"},{"?":"lib/db/repository.ts","deleteCategoryBudget for Remove"},{"?":"lib/budget.ts","budgetTier drives color/hint per row"},{"?":"lib/format.ts","formatPeso"},{"?":"components/shared (Header, BottomNav)","shell"},{"?":"components/ui/progress.tsx","indicatorClassName prop"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/budgetView.test.ts","empty state must be reachable on fresh installs (no budget row)"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","breakdown gating + row rendering must stay green"},{"?":"Empty state before first budget ('Set a monthly budget first' only when budget===null, never while loading); rows sorted by category name; negative remaining renders via formatPeso"},{"*":"Over-budget shows destructive text and red bar; spent-by-category keys are category NAMES"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs derived total budget with a tier-colored Progress bar, empty state, and a Breakdown card listing per-category budgets (spent-vs-allotted rows with tier hints, Edit/Remove actions) plus the CategoryBudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: totalBudget undefined = query pending (Loading…), 0 after load = no budget (empty state), >0 = summary — loading = totalBudget === undefined || spent === undefined; Breakdown hint renders only when totalBudget === 0 after load (never while undefined/loading)"},{"!!":"Add breakdown stays disabled while loading (data pending); after load, always enabled regardless of overall budget — no gating on overall budget existence; breakdown rows join ids via parseCategoryBudgetId then sort by category name (localeCompare) before rendering; unknown ids are dropped"},{"?":"CatDialogOpen drives CategoryBudgetDialog only (Add/Edit breakdown); editing distinguishes Add (Select free) from Edit (Select locked); dialog gets only unallocated expense categories since edit mode displays via watchCategory"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/CategoryBudgetDialog.tsx","opened for add/edit breakdown"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget rows exist"},{"?":"tests/categoryBudgetView.test.ts","asserts breakdown gating, row content, tier hint, Edit/Remove"}],"AB":[{"?":"lib/hooks/useBudget.ts","useTotalBudget, useMonthlySpent, useCategoryBudgets, useMonthlySpentByCategory supply data"},{"?":"lib/db/schema.ts","parseCategoryBudgetId for breakdown row mapping"},{"?":"lib/budget.ts","budgetTier for progress tier calculation"},{"?":"lib/format.ts","formatPeso for currency formatting"}],"E":[{"!!":"npm test -- tests/budgetView.test.ts","empty state must render when budgets.toArray resolves []"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","breakdown rows render from toArray filtering + name-keyed spend, button enabled when loaded"},{"!!":"npm run build","types must align with useTotalBudget returning number | undefined"},{"!":"npm run lint","no unused imports or stale references"}]} */
 
 "use client";
 
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CategoryBudgetDialog } from "@/components/budget/CategoryBudgetDialog";
 import {
+  useTotalBudget,
   useMonthlySpent,
   useCategoryBudgets,
   useMonthlySpentByCategory,
@@ -27,8 +28,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export function BudgetView() {
-  const catBudgets = useCategoryBudgets();
+  const totalBudget = useTotalBudget();
   const spent = useMonthlySpent();
+  const catBudgets = useCategoryBudgets();
   const spentByCat = useMonthlySpentByCategory() ?? {};
   const allCategories = useCategories() ?? [];
   const [catDialogOpen, setCatDialogOpen] = useState(false);
@@ -39,15 +41,9 @@ export function BudgetView() {
     year: "numeric",
   });
 
-  const budgetAmount = catBudgets
-    ? catBudgets.reduce((sum, b) => sum + b.amount, 0)
-    : undefined;
-  const budget = budgetAmount !== undefined && budgetAmount > 0
-    ? { amount: budgetAmount }
-    : null;
+  const loading = totalBudget === undefined || spent === undefined;
+  const hasBudget = totalBudget !== undefined && totalBudget > 0;
   const resolvedCatBudgets = catBudgets ?? [];
-
-  const loading = budgetAmount === undefined || spent === undefined;
 
   const unallocated = allCategories.filter(
     (c) => c.type === "expense" && !resolvedCatBudgets.some((b) => parseCategoryBudgetId(b.id) === c.id)
@@ -80,7 +76,7 @@ export function BudgetView() {
               <p className="py-8 text-center text-sm text-muted-foreground">
                 Loading…
               </p>
-            ) : !budget ? (
+            ) : !hasBudget ? (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <IconPigMoney className="h-8 w-8 text-muted-foreground" />
                 <div>
@@ -92,7 +88,7 @@ export function BudgetView() {
               </div>
             ) : (
               (() => {
-                const limit = budget.amount;
+                const limit = totalBudget!;
                 const { pct, tier } = budgetTier(spent!, limit);
                 const remaining = limit - spent!;
                 return (
@@ -142,7 +138,7 @@ export function BudgetView() {
             </Button>
           </CardHeader>
           <CardContent>
-            {budget === null ? (
+            {!hasBudget && !loading ? (
               <p className="text-xs text-muted-foreground">Add a category breakdown to get started.</p>
             ) : resolvedCatBudgets.length === 0 ? (
               <p className="py-4 text-center text-xs text-muted-foreground">

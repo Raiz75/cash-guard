@@ -81,8 +81,7 @@ export function CategoryBudgetDialog({ open, onOpenChange, categories, editing }
         <DialogHeader>
           <DialogTitle>{editing ? "Edit breakdown" : "Add breakdown"}</DialogTitle>
           <DialogDescription>
-            Monthly limit for one category. Breakdowns cannot exceed your overall
-            budget.
+            Monthly limit for one category.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
