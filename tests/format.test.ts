@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/format.ts — PHP currency formatting, ISO date helpers, range math, and downloadFile().","IDD":[{"?":"Uses fixed UTC dates for deterministic rangeStartISO monthRange assertions"},{"?":"formatPeso uses Intl.NumberFormat en-PH/PHP — locale must be available in the test env (happy-dom)"}],"A":[{"!":"lib/format.ts","exercised by these tests"}],"AB":[{"?":"vitest.config.ts","happy-dom env provides Intl"}],"E":[{"!!":"npm test format"},{"?":"toISODate zero-padding drives lexicographic range comparisons — verify edge months/days"},{"*":"downloadFile mutates document.body (append + remove); guard with try/catch if needed"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/format.ts — PHP currency formatting, ISO date helpers, range math, and downloadFile().","IDD":[{"?":"Uses fixed UTC dates for deterministic rangeStartISO monthRange assertions"},{"?":"formatPeso uses Intl.NumberFormat en-PH/PHP — locale must be available in the test env (happy-dom)"},{"?":"rangeStartISO and rangeEndDateISO now accept DateFilter objects instead of plain strings"}],"A":[{"!":"lib/format.ts","exercised by these tests"}],"AB":[{"?":"vitest.config.ts","happy-dom env provides Intl"}],"E":[{"!!":"npm test format"},{"?":"toISODate zero-padding drives lexicographic range comparisons — verify edge months/days"},{"?":"Verify rangeStartISO handles all/today/bydate/daterange DateFilter variants"},{"?":"Verify rangeEndDateISO returns endDate for daterange, null otherwise"},{"*":"downloadFile mutates document.body (append + remove); guard with try/catch if needed"}]} */
 import { describe, it, expect, vi } from "vitest";
 import {
   formatPeso,
@@ -6,6 +6,7 @@ import {
   todayISO,
   monthRange,
   rangeStartISO,
+  rangeEndDateISO,
   formatDisplayDate,
   downloadFile,
 } from "@/lib/format";
@@ -68,7 +69,7 @@ describe("monthRange", () => {
 
 describe("rangeStartISO", () => {
   it("returns null for 'all'", () => {
-    expect(rangeStartISO("all")).toBeNull();
+    expect(rangeStartISO({ range: "all" })).toBeNull();
   });
 
   it("returns today for 'today'", () => {
@@ -76,33 +77,45 @@ describe("rangeStartISO", () => {
     const expected = `${today.getFullYear()}-${String(
       today.getMonth() + 1
     ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    expect(rangeStartISO("today")).toBe(expected);
+    expect(rangeStartISO({ range: "today" })).toBe(expected);
   });
 
-  it("returns 6 days ago for '7d'", () => {
-    const today = new Date();
-    const start = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate() - 6
-    );
-    const expected = `${start.getFullYear()}-${String(
-      start.getMonth() + 1
-    ).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
-    expect(rangeStartISO("7d")).toBe(expected);
+  it("returns the date field for 'bydate'", () => {
+    expect(rangeStartISO({ range: "bydate", date: "2026-03-15" })).toBe("2026-03-15");
   });
 
-  it("returns 29 days ago for '1m'", () => {
-    const today = new Date();
-    const start = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate() - 29
-    );
-    const expected = `${start.getFullYear()}-${String(
-      start.getMonth() + 1
-    ).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
-    expect(rangeStartISO("1m")).toBe(expected);
+  it("returns null for 'bydate' when date is missing", () => {
+    expect(rangeStartISO({ range: "bydate" })).toBeNull();
+  });
+
+  it("returns startDate for 'daterange'", () => {
+    expect(rangeStartISO({ range: "daterange", startDate: "2026-01-01", endDate: "2026-01-31" })).toBe("2026-01-01");
+  });
+
+  it("returns null for 'daterange' when startDate is missing", () => {
+    expect(rangeStartISO({ range: "daterange", endDate: "2026-01-31" })).toBeNull();
+  });
+});
+
+describe("rangeEndDateISO", () => {
+  it("returns endDate for 'daterange'", () => {
+    expect(rangeEndDateISO({ range: "daterange", startDate: "2026-01-01", endDate: "2026-01-31" })).toBe("2026-01-31");
+  });
+
+  it("returns null for 'daterange' when endDate is missing", () => {
+    expect(rangeEndDateISO({ range: "daterange", startDate: "2026-01-01" })).toBeNull();
+  });
+
+  it("returns null for 'all'", () => {
+    expect(rangeEndDateISO({ range: "all" })).toBeNull();
+  });
+
+  it("returns null for 'today'", () => {
+    expect(rangeEndDateISO({ range: "today" })).toBeNull();
+  });
+
+  it("returns null for 'bydate'", () => {
+    expect(rangeEndDateISO({ range: "bydate", date: "2026-03-15" })).toBeNull();
   });
 });
 

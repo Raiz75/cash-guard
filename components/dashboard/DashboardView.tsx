@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc, each row leading with a color dot matching its slice fill; card header has no Total row because the donut center shows the total — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useBudget, useMonthlySpent feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, DateRange"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc, each row leading with a color dot matching its slice fill; card header has no Total row because the donut center shows the total — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"},{"?":"DateFilter replaces old DateRange — supports all/today/bydate/daterange with calendar pickers"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useBudget, useMonthlySpent feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, rangeEndDateISO, DateFilter"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
 
 "use client";
 
@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { useTransactions, useRecentTransactions } from "@/lib/hooks/useTransactions";
 import { useCategories } from "@/lib/hooks/useTransactions";
-import { formatPeso, rangeStartISO, type DateRange } from "@/lib/format";
+import { formatPeso, rangeStartISO, rangeEndDateISO, type DateFilter } from "@/lib/format";
 import { Header } from "@/components/shared/Header";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
@@ -42,12 +42,13 @@ export function DashboardView() {
   const totalExpense = all.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  const [range, setRange] = useState<DateRange>("all");
-  const rangeStart = rangeStartISO(range);
+  const [dateFilter, setDateFilter] = useState<DateFilter>({ range: "all" });
+  const rangeStart = rangeStartISO(dateFilter);
+  const rangeEnd = rangeEndDateISO(dateFilter);
 
   const expenseByCategory = new Map<string, number>();
   for (const t of all) {
-    if (t.type === "expense" && (rangeStart === null || t.date >= rangeStart)) {
+    if (t.type === "expense" && (rangeStart === null || t.date >= rangeStart) && (rangeEnd === null || t.date <= rangeEnd)) {
       expenseByCategory.set(t.category, (expenseByCategory.get(t.category) ?? 0) + t.amount);
     }
   }
@@ -91,7 +92,7 @@ export function DashboardView() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Spending by category</CardTitle>
-            <RangeFilter value={range} onChange={setRange} />
+            <RangeFilter value={dateFilter} onChange={setDateFilter} />
           </CardHeader>
           <CardContent>
             {budget && monthlySpent !== undefined ? (

@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Search input + collapsible filter panel (range, type, category). Exports the Filters interface and the pure applyFilters() predicate used by TransactionsView.","IDD":[{"?":"Search stays visible; the IconFilter button toggles the panel. Button is 'default' when the panel is open OR any filter differs from its default"},{"?":"applyFilters is exported and kept pure so filtering is testable and memoizable"},{"?":"Category options render via CategoryIcon; type uses 'all' | TransactionType"}],"A":[{"!!!":"components/transactions/TransactionsView.tsx","CRITICAL":"consumes Filters and applyFilters — renaming fields or changing semantics breaks filtering"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","rangeStartISO, DateRange"},{"?":"components/shared/RangeFilter.tsx and CategoryIcon.tsx","range select or category icon changes"},{"?":"lib/db/schema.ts","Transaction, TransactionType"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify search, range, type, and category filtering combine correctly"},{"*":"Base UI Select value/onValueChange are string | null — keep the 'all' guards"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Search input + collapsible filter panel (range, type, category). Exports the Filters interface and the pure applyFilters() predicate used by TransactionsView.","IDD":[{"?":"Search stays visible; the IconFilter button toggles the panel. Button is 'default' when the panel is open OR any filter differs from its default"},{"?":"applyFilters is exported and kept pure so filtering is testable and memoizable"},{"?":"Category options render via CategoryIcon; type uses 'all' | TransactionType"},{"?":"Filters.range is now a DateFilter object (all/today/bydate/daterange) instead of a plain string"}],"A":[{"!!!":"components/transactions/TransactionsView.tsx","CRITICAL":"consumes Filters and applyFilters — renaming fields or changing semantics breaks filtering"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/format.ts","rangeStartISO, rangeEndDateISO, DateFilter"},{"?":"components/shared/RangeFilter.tsx and CategoryIcon.tsx","range select or category icon changes"},{"?":"lib/db/schema.ts","Transaction, TransactionType"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify search, range, type, and category filtering combine correctly"},{"?":"Verify bydate and daterange modes filter correctly"},{"*":"Base UI Select value/onValueChange are string | null — keep the 'all' guards"}]} */
 
 "use client";
 
@@ -17,14 +17,18 @@ import {
 import { useCategories } from "@/lib/hooks/useTransactions";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
 import { RangeFilter } from "@/components/shared/RangeFilter";
-import { rangeStartISO, type DateRange } from "@/lib/format";
+import {
+  rangeStartISO,
+  rangeEndDateISO,
+  type DateFilter,
+} from "@/lib/format";
 import type { Transaction, TransactionType } from "@/lib/db/schema";
 
 export interface Filters {
   type: "all" | TransactionType;
   category: string;
   search: string;
-  range: DateRange;
+  range: DateFilter;
 }
 
 export function TransactionFilters({
@@ -40,7 +44,7 @@ export function TransactionFilters({
   const filtersActive =
     filters.type !== "all" ||
     filters.category !== "all" ||
-    filters.range !== "all";
+    filters.range.range !== "all";
 
   return (
     <div className="space-y-2">
@@ -116,11 +120,13 @@ export function applyFilters(
   filters: Filters
 ): Transaction[] {
   const q = filters.search.toLowerCase().trim();
-  const rangeStart = filters.range === "all" ? null : rangeStartISO(filters.range);
+  const rangeStart = rangeStartISO(filters.range);
+  const rangeEnd = rangeEndDateISO(filters.range);
   return transactions.filter((tx) => {
     if (filters.type !== "all" && tx.type !== filters.type) return false;
     if (filters.category !== "all" && tx.category !== filters.category) return false;
     if (rangeStart && tx.date < rangeStart) return false;
+    if (rangeEnd && tx.date > rangeEnd) return false;
     if (q) {
       const haystack = `${tx.description ?? ""} ${tx.category}`.toLowerCase();
       if (!haystack.includes(q)) return false;

@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Pure formatting/date helpers — PHP currency formatting, ISO date helpers, quick date-range math, and a browser downloadFile() utility.","IDD":[{"?":"Currency uses Intl.NumberFormat with en-PH / PHP and fixed 2 decimals."},{"?":"All dates are ISO strings (YYYY-MM-DD) so lexicographic comparison works for ranges."},{"?":"rangeStartISO maps DateRange (\"all\" | \"today\" | \"7d\" | \"1m\") to a start date; \"all\" → null."}],"A":[{"?":"components/transactions/TransactionList.tsx","Uses formatPeso, formatDisplayDate"},{"?":"components/dashboard/DashboardView.tsx","Uses formatPeso, rangeStartISO, DateRange"},{"?":"components/settings/SettingsView.tsx","Uses downloadFile, todayISO"},{"?":"components/transactions/TransactionForm.tsx","Uses todayISO"},{"?":"components/transactions/TransactionFilters.tsx","Uses rangeStartISO, DateRange"},{"?":"components/shared/RangeFilter.tsx","Uses DateRange type"}],"AB":[{"?":"Browser Intl support / locale data for en-PH"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify PHP peso format (₱, 2 decimals) and en-PH display dates"},{"*":"toISODate must produce zero-padded values or date-range comparisons break"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Pure formatting/date helpers — PHP currency formatting, ISO date helpers, flexible DateFilter type, and a browser downloadFile() utility.","IDD":[{"?":"Currency uses Intl.NumberFormat with en-PH / PHP and fixed 2 decimals."},{"?":"All dates are ISO strings (YYYY-MM-DD) so lexicographic comparison works for ranges."},{"?":"DateFilter replaces the old DateRange union — supports all/today/bydate/daterange with optional date/startDate/endDate fields."},{"?":"rangeStartISO and rangeEndDateISO accept DateFilter and return nullable ISO strings for range filtering."}],"A":[{"?":"components/transactions/TransactionList.tsx","Uses formatPeso, formatDisplayDate"},{"?":"components/dashboard/DashboardView.tsx","Uses formatPeso, rangeStartISO, rangeEndDateISO, DateFilter"},{"?":"components/settings/SettingsView.tsx","Uses downloadFile, todayISO"},{"?":"components/transactions/TransactionForm.tsx","Uses todayISO"},{"?":"components/transactions/TransactionFilters.tsx","Uses rangeStartISO, rangeEndDateISO, DateFilter"},{"?":"components/shared/RangeFilter.tsx","Uses DateFilter type"}],"AB":[{"?":"Browser Intl support / locale data for en-PH"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify rangeStartISO/rangeEndDateISO handle all four ranges correctly"},{"*":"toISODate must produce zero-padded values or date-range comparisons break"}]} */
 
 const phpFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -29,14 +29,26 @@ export function monthRange(anchor = new Date()): { start: string; end: string } 
   return { start, end };
 }
 
-export type DateRange = "all" | "today" | "7d" | "1m";
+export type DateRange = "all" | "today" | "bydate" | "daterange";
 
-export function rangeStartISO(range: DateRange): string | null {
-  if (range === "all") return null;
-  const now = new Date();
-  const days = range === "today" ? 0 : range === "7d" ? 6 : 29;
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days);
-  return toISODate(start);
+export type DateFilter = {
+  range: DateRange;
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export function rangeStartISO(filter: DateFilter): string | null {
+  if (filter.range === "all") return null;
+  if (filter.range === "today") return toISODate(new Date());
+  if (filter.range === "bydate") return filter.date ?? null;
+  if (filter.range === "daterange") return filter.startDate ?? null;
+  return null;
+}
+
+export function rangeEndDateISO(filter: DateFilter): string | null {
+  if (filter.range === "daterange") return filter.endDate ?? null;
+  return null;
 }
 
 export function formatDisplayDate(iso: string): string {

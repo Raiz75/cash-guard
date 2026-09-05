@@ -40,7 +40,7 @@ export function TransactionsView() {
     type: "all",
     category: "all",
     search: "",
-    range: "all",
+    range: { range: "all" },
   });
   const [page, setPage] = useState(1);
 
