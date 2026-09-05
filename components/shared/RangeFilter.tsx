@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Four-button quick date-range selector with optional calendar popover for bydate/daterange modes.","IDD":[{"?":"Controlled component: value (DateFilter) + onChange, no internal state for filter itself"},{"?":"Auto-sets date/startDate+endDate when switching to bydate/daterange if not already set"},{"?":"Calendar uses react-day-picker modes: single for bydate, range for daterange"},{"?":"Popover from @base-ui/react/popover (shadcn base-maia wrapper)"}],"A":[{"?":"components/dashboard/DashboardView.tsx","spending breakdown range"},{"?":"components/transactions/TransactionFilters.tsx","filter range"}],"AB":[{"?":"lib/format.ts","DateFilter type"},{"?":"components/ui/calendar.tsx","Calendar component"},{"?":"components/ui/popover.tsx","Popover component"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify bydate shows single calendar and daterange shows range calendar"},{"?":"Verify auto-set date when switching modes"},{"*":"Date display text: single shows 'Sep 6, 2026', range shows 'Sep 6 – Sep 12, 2026'"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Four-button quick date-range selector with calendar popover for bydate (single calendar, opens on button click) and daterange (two side-by-side calendars for from/to dates).","IDD":[{"?":"Controlled component: value (DateFilter) + onChange, no internal state for filter itself"},{"?":"Auto-sets date/startDate+endDate when switching to bydate/daterange if not already set"},{"?":"bydate: calendar opens immediately when the By date button is clicked, user picks a date, popover closes"},{"?":"daterange: two side-by-side calendars, one for from date and one for to date, no auto-close"},{"?":"Popover from @base-ui/react/popover (shadcn base-maia wrapper)"}],"A":[{"?":"components/dashboard/DashboardView.tsx","spending breakdown range"},{"?":"components/transactions/TransactionFilters.tsx","filter range"}],"AB":[{"?":"lib/format.ts","DateFilter type"},{"?":"components/ui/calendar.tsx","Calendar component"},{"?":"components/ui/popover.tsx","Popover component"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify bydate opens calendar on button click"},{"?":"Verify daterange shows two side-by-side calendars"},{"?":"Verify auto-set date when switching modes"},{"*":"Date display text: single shows 'Sep 6, 2026', range shows 'Sep 6 – Sep 12, 2026'"}]} */
 
 "use client";
 
@@ -37,19 +37,29 @@ export function RangeFilter({
   value: DateFilter;
   onChange: (filter: DateFilter) => void;
 }) {
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [fromOpen, setFromOpen] = useState(false);
+  const [toOpen, setToOpen] = useState(false);
   const today = todayISO();
 
   const handleRangeChange = (range: DateFilter["range"]) => {
-    if (range === "bydate" && !value.date) {
-      onChange({ range, date: today });
+    if (range === "bydate") {
+      if (!value.date) {
+        onChange({ range, date: today });
+      } else {
+        onChange({ range, date: value.date });
+      }
+      setFromOpen(true);
       return;
     }
-    if (range === "daterange" && !value.startDate) {
-      onChange({ range, startDate: today, endDate: today });
+    if (range === "daterange") {
+      if (!value.startDate) {
+        onChange({ range, startDate: today, endDate: today });
+      } else {
+        onChange({ range, startDate: value.startDate, endDate: value.endDate });
+      }
       return;
     }
-    onChange({ range, date: value.date, startDate: value.startDate, endDate: value.endDate });
+    onChange({ range });
   };
 
   return (
@@ -70,7 +80,7 @@ export function RangeFilter({
       </div>
       {value.range === "bydate" && (
         <div className="flex items-center">
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <Popover open={fromOpen} onOpenChange={setFromOpen}>
             <PopoverTrigger
               render={
                 <Button
@@ -90,7 +100,7 @@ export function RangeFilter({
                 onSelect={(day) => {
                   if (day) {
                     onChange({ range: "bydate", date: toISODate(day) });
-                    setCalendarOpen(false);
+                    setFromOpen(false);
                   }
                 }}
               />
@@ -99,42 +109,77 @@ export function RangeFilter({
         </div>
       )}
       {value.range === "daterange" && (
-        <div className="flex items-center">
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left font-normal"
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground mb-1">From</p>
+            <Popover open={fromOpen} onOpenChange={setFromOpen}>
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-left font-normal"
+                  />
+                }
+              >
+                {value.startDate ? formatDisplayDate(value.startDate) : today}
+              </PopoverTrigger>
+              <PopoverContent align="start">
+                <Calendar
+                  mode="single"
+                  selected={value.startDate ? toLocalDate(value.startDate) : undefined}
+                  onSelect={(day) => {
+                    if (day) {
+                      const start = toISODate(day);
+                      const end = value.endDate ?? start;
+                      onChange({
+                        range: "daterange",
+                        startDate: start,
+                        endDate: start > end ? start : end,
+                      });
+                      setFromOpen(false);
+                    }
+                  }}
                 />
-              }
-            >
-              {value.startDate && value.endDate
-                ? `${formatDisplayDate(value.startDate)} – ${formatDisplayDate(value.endDate)}`
-                : today}
-            </PopoverTrigger>
-            <PopoverContent align="start">
-              <Calendar
-                mode="range"
-                selected={{
-                  from: value.startDate ? toLocalDate(value.startDate) : undefined,
-                  to: value.endDate ? toLocalDate(value.endDate) : undefined,
-                }}
-                onSelect={(range) => {
-                  onChange({
-                    range: "daterange",
-                    startDate: range?.from ? toISODate(range.from) : undefined,
-                    endDate: range?.to ? toISODate(range.to) : undefined,
-                  });
-                  if (range?.from && range?.to) {
-                    setCalendarOpen(false);
-                  }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground mb-1">To</p>
+            <Popover open={toOpen} onOpenChange={setToOpen}>
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-left font-normal"
+                  />
+                }
+              >
+                {value.endDate ? formatDisplayDate(value.endDate) : today}
+              </PopoverTrigger>
+              <PopoverContent align="start">
+                <Calendar
+                  mode="single"
+                  selected={value.endDate ? toLocalDate(value.endDate) : undefined}
+                  onSelect={(day) => {
+                    if (day) {
+                      const end = toISODate(day);
+                      const start = value.startDate ?? end;
+                      onChange({
+                        range: "daterange",
+                        startDate: start > end ? end : start,
+                        endDate: end,
+                      });
+                      setToOpen(false);
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       )}
     </div>
