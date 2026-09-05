@@ -6,17 +6,9 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   db,
   type Budget,
-  OVERALL_BUDGET_ID,
   CATEGORY_BUDGET_PREFIX,
 } from "@/lib/db/schema";
 import { monthRange } from "@/lib/format";
-
-export function useBudget(): Budget | null | undefined {
-  return useLiveQuery(
-    async () => (await db.budgets.get(OVERALL_BUDGET_ID)) ?? null,
-    []
-  );
-}
 
 export function useMonthlySpent(): number | undefined {
   return useLiveQuery(async () => {

@@ -1,7 +1,7 @@
 /* AI-CONTEXT-NOTE:{"R":"Vitest unit tests for lib/budget.ts pure tier math (budgetTier/crossedTier/BUDGET_TIER_MESSAGES/budgetTierMessage) and both lib/validations/budget.ts schemas (budgetSchema, categoryBudgetSchema).","IDD":[{"?":"Pure modules tested directly with no DOM or Dexie mocks"},{"?":"Boundary cases sit exactly on 50/75/90/100 thresholds since tiers use inclusive lower bounds"},{"!!":"categoryBudgetSchema must reject blank category plus non-positive/NaN/blank-string amounts so the dialog shows friendly copy instead of saving junk"},{"?":"budgetSchema rejection cases assert the exact 'Budget must be greater than 0' message"}],"A":[{"!!!":"lib/budget.ts","CRITICAL":"threshold semantics changes break these boundary cases"},{"!!":"lib/validations/budget.ts","schema message/rejection changes break these cases"},{"?":"components/budget/tierStyles.ts","tier keys exercised here keep its Record keys honest"}],"AB":[{"?":"vitest","runner only — no DOM/db infra required"}],"E":[{"!!":"npm test -- tests/budget.test.ts","must pass before any budget math or schema change merges"},{"*":"it.each rows cover 0/-1 and blank-string/NaN rejections data-driven"}]} */
 import { describe, it, expect } from "vitest";
 import { budgetTier, crossedTier, budgetTierMessage, BUDGET_TIER_MESSAGES } from "@/lib/budget";
-import { budgetSchema, categoryBudgetSchema } from "@/lib/validations/budget";
+import { categoryBudgetSchema } from "@/lib/validations/budget";
 
 describe("budgetTier", () => {
   it("returns ok below 50%", () => {
@@ -89,35 +89,6 @@ describe("budgetTierMessage", () => {
     expect(budgetTierMessage("warn75", "Transport")).toBe("You've used 75% of your Transport budget");
     expect(budgetTierMessage("over", "Food")).toBe("You've exceeded your Food budget");
   });
-});
-
-describe("budgetSchema", () => {
-  it("accepts a positive amount", () => {
-    expect(budgetSchema.safeParse({ amount: 20000 }).success).toBe(true);
-  });
-
-  it("coerces numeric strings", () => {
-    const parsed = budgetSchema.safeParse({ amount: "1500" });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) expect(parsed.data.amount).toBe(1500);
-  });
-
-  it.each([0, -1])("rejects non-positive amount %s", (amount) => {
-    expect(budgetSchema.safeParse({ amount }).success).toBe(false);
-  });
-
-  it.each(["", Number.NaN])(
-    "rejects blank/NaN amount %s with the friendly message",
-    (amount) => {
-      const parsed = budgetSchema.safeParse({ amount });
-      expect(parsed.success).toBe(false);
-      if (!parsed.success) {
-        expect(parsed.error.issues[0].message).toBe(
-          "Budget must be greater than 0"
-        );
-      }
-    }
-  );
 });
 
 describe("categoryBudgetSchema", () => {

@@ -52,11 +52,11 @@ vi.mock("dexie-react-hooks", async () => {
 import { BudgetView } from "@/components/budget/BudgetView";
 
 describe("BudgetView", () => {
-  it("renders the empty state when no budget row exists", async () => {
+  it("renders the empty state when no category budgets exist", async () => {
     render(createElement(BudgetView));
     expect(await screen.findByText("No budget yet")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Set monthly budget" })
+      screen.getByText("Add category breakdowns below to set your budget.")
     ).toBeInTheDocument();
   });
 });

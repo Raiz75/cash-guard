@@ -2,14 +2,6 @@
 
 import { z } from "zod";
 
-export const budgetSchema = z.object({
-  amount: z.coerce
-    .number({ invalid_type_error: "Budget must be greater than 0" })
-    .positive("Budget must be greater than 0"),
-});
-
-export type BudgetInput = z.infer<typeof budgetSchema>;
-
 export const categoryBudgetSchema = z.object({
   categoryId: z.string().min(1, "Choose a category"),
   amount: z.coerce

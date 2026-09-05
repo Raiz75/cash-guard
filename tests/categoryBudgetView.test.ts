@@ -69,25 +69,24 @@ beforeEach(() => {
 });
 
 describe("BudgetView breakdown", () => {
-  it("disables Add breakdown until an overall budget exists", async () => {
+  it("shows Add breakdown button enabled when no category budgets exist", async () => {
     render(createElement(BudgetView));
     expect(await screen.findByText("No budget yet")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add breakdown" })).toBeDisabled();
-    expect(screen.getByText("Set a monthly budget first")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add breakdown" })).toBeEnabled();
   });
 
-  it("does not show the budget-required hint while data is still loading", async () => {
-    state.budgetRow = { id: "overall", amount: 10000, createdAt: 1, updatedAt: 1 };
+  it("does not show hint while data is still loading", async () => {
+    state.budgetList = [
+      { id: "cat:c1", amount: 8000, createdAt: 1, updatedAt: 1 },
+    ];
     render(createElement(BudgetView));
-    expect(screen.queryByText("Set a monthly budget first")).not.toBeInTheDocument();
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add breakdown" })).toBeDisabled();
-    expect(await screen.findByText("₱10,000.00")).toBeInTheDocument();
+    expect(await screen.findByText("₱8,000.00")).toBeInTheDocument();
   });
 
   it("renders a breakdown row with spent-vs-allotted and tier hint", async () => {
-    state.budgetRow = { id: "overall", amount: 10000, createdAt: 1, updatedAt: 1 };
     state.budgetList = [
-      { id: "overall", amount: 10000, createdAt: 1, updatedAt: 1 },
       { id: "cat:c1", amount: 8000, createdAt: 1, updatedAt: 1 },
     ];
     state.transactions = [
@@ -95,17 +94,15 @@ describe("BudgetView breakdown", () => {
     ];
     render(createElement(BudgetView));
     expect(await screen.findByText("Food")).toBeInTheDocument();
-    expect(screen.getByText(/of ₱8,000/)).toBeInTheDocument();
-    expect(screen.getByText("Halfway there — watch your spending.")).toBeInTheDocument();
+    expect(screen.getAllByText(/of ₱8,000/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Halfway there — watch your spending.").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: "Add breakdown" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
 
   it("sorts breakdown rows by category name, not Dexie key order", async () => {
-    state.budgetRow = { id: "overall", amount: 10000, createdAt: 1, updatedAt: 1 };
     state.budgetList = [
-      { id: "overall", amount: 10000, createdAt: 1, updatedAt: 1 },
       { id: "cat:cZebra", amount: 1000, createdAt: 1, updatedAt: 1 },
       { id: "cat:cApple", amount: 2000, createdAt: 1, updatedAt: 1 },
     ];

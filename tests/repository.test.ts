@@ -90,8 +90,6 @@ import {
   importTransactions,
   transactionCountForCategory,
   reassignCategory,
-  getBudget,
-  setBudget,
   getMonthlySpent,
   getCategoryBudgets,
   setCategoryBudget,
@@ -337,29 +335,6 @@ describe("importTransactions", () => {
   });
 });
 
-describe("setBudget/getBudget", () => {
-  it("returns null when no budget has been set", async () => {
-    expect(await getBudget()).toBeNull();
-  });
-
-  it("inserts the overall budget", async () => {
-    await setBudget(20000);
-    const budget = await getBudget();
-    expect(budget).toMatchObject({ id: "overall", amount: 20000 });
-    expect(budgetsStore).toHaveLength(1);
-  });
-
-  it("updates in place and preserves createdAt", async () => {
-    budgetsStore.push({ id: "overall", amount: 1, createdAt: 1000, updatedAt: 1000 });
-    await setBudget(25000);
-    const second = await getBudget();
-    expect(budgetsStore).toHaveLength(1);
-    expect(second!.amount).toBe(25000);
-    expect(second!.createdAt).toBe(1000);
-    expect(second!.updatedAt).toBeGreaterThan(1000);
-  });
-});
-
 describe("getMonthlySpent", () => {
   it("sums current-month expenses only", async () => {
     vi.useFakeTimers();
@@ -402,7 +377,6 @@ describe("category budget id helpers", () => {
 
 describe("setCategoryBudget", () => {
   it("creates then updates preserving createdAt", async () => {
-    await setBudget(10000);
     await setCategoryBudget("catA", 3000);
     let rows = await getCategoryBudgets();
     expect(rows).toHaveLength(1);
@@ -415,66 +389,35 @@ describe("setCategoryBudget", () => {
     expect(rows[0].createdAt).toBe(created);
   });
 
-  it("rejects when no overall budget exists", async () => {
-    await expect(setCategoryBudget("catA", 3000)).rejects.toThrow(
-      "Set a monthly budget first"
-    );
-  });
-
-  it("rejects over-allocation but allows exactly-equal totals", async () => {
-    await setBudget(10000);
-    await setCategoryBudget("a", 6000);
-    await expect(setCategoryBudget("b", 5000)).rejects.toThrow(
-      /left unallocated/
-    );
-    await setCategoryBudget("b", 4000);
-    expect(await getCategoryBudgets()).toHaveLength(2);
-  });
-
-  it("editing a row does not double-count itself against the cap", async () => {
-    await setBudget(10000);
+  it("editing a row does not double-count itself", async () => {
     await setCategoryBudget("a", 6000);
     await setCategoryBudget("a", 9000);
     expect((await getCategoryBudgets())[0].amount).toBe(9000);
   });
 });
 
-describe("setBudget allocation guard", () => {
-  it("rejects lowering below allocated total, allows equal", async () => {
-    await setBudget(10000);
-    await setCategoryBudget("a", 7000);
-    await expect(setBudget(5000)).rejects.toThrow(/already allocated/);
-    await setBudget(7000);
-    expect((await getBudget())!.amount).toBe(7000);
-  });
-});
-
 describe("amount guards", () => {
-  it("rejects zero amounts in both setters without writing", async () => {
-    await setBudget(10000);
-    await expect(setBudget(0)).rejects.toThrow("Amount must be greater than 0");
+  it("rejects zero amounts without writing", async () => {
     await expect(setCategoryBudget("a", 0)).rejects.toThrow(
       "Amount must be greater than 0"
     );
-    expect((await getBudget())!.amount).toBe(10000);
     expect(await getCategoryBudgets()).toHaveLength(0);
   });
 
-  it("rejects negative amounts in both setters before other guards run", async () => {
-    await expect(setBudget(-500)).rejects.toThrow(
-      "Amount must be greater than 0"
-    );
+  it("rejects negative amounts before other guards run", async () => {
     await expect(setCategoryBudget("a", -500)).rejects.toThrow(
       "Amount must be greater than 0"
     );
-    expect(await getBudget()).toBeNull();
     expect(await getCategoryBudgets()).toHaveLength(0);
+  });
+
+  it("rejects empty categoryId", async () => {
+    await expect(setCategoryBudget("", 500)).rejects.toThrow("Choose a category");
   });
 });
 
 describe("deleteCategoryBudget", () => {
   it("removes only its own row", async () => {
-    await setBudget(10000);
     await setCategoryBudget("a", 1000);
     await setCategoryBudget("b", 2000);
     await deleteCategoryBudget("a");
@@ -485,7 +428,6 @@ describe("deleteCategoryBudget", () => {
 
 describe("deleteCategory cascade", () => {
   it("deletes the category's breakdown row atomically", async () => {
-    await setBudget(10000);
     const cat = await addCategory({ name: "Food", type: "expense" });
     await setCategoryBudget(cat.id, 2500);
     await deleteCategory(cat.id);

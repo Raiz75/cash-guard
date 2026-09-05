@@ -11,10 +11,8 @@ import { CategoryIcon } from "@/components/shared/CategoryIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BudgetDialog } from "@/components/budget/BudgetDialog";
 import { CategoryBudgetDialog } from "@/components/budget/CategoryBudgetDialog";
 import {
-  useBudget,
   useMonthlySpent,
   useCategoryBudgets,
   useMonthlySpentByCategory,
@@ -29,12 +27,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export function BudgetView() {
-  const budget = useBudget();
+  const catBudgets = useCategoryBudgets();
   const spent = useMonthlySpent();
-  const catBudgets = useCategoryBudgets() ?? [];
   const spentByCat = useMonthlySpentByCategory() ?? {};
   const allCategories = useCategories() ?? [];
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [editing, setEditing] = useState<{ categoryId: string; name: string } | null>(null);
 
@@ -43,13 +39,21 @@ export function BudgetView() {
     year: "numeric",
   });
 
-  const loading = budget === undefined || spent === undefined;
+  const budgetAmount = catBudgets
+    ? catBudgets.reduce((sum, b) => sum + b.amount, 0)
+    : undefined;
+  const budget = budgetAmount !== undefined && budgetAmount > 0
+    ? { amount: budgetAmount }
+    : null;
+  const resolvedCatBudgets = catBudgets ?? [];
+
+  const loading = budgetAmount === undefined || spent === undefined;
 
   const unallocated = allCategories.filter(
-    (c) => c.type === "expense" && !catBudgets.some((b) => parseCategoryBudgetId(b.id) === c.id)
+    (c) => c.type === "expense" && !resolvedCatBudgets.some((b) => parseCategoryBudgetId(b.id) === c.id)
   );
 
-  const breakdownRows = catBudgets
+  const breakdownRows = resolvedCatBudgets
     .flatMap((b) => {
       const cat = allCategories.find((c) => c.id === parseCategoryBudgetId(b.id));
       return cat ? [{ b, cat }] : [];
@@ -82,12 +86,9 @@ export function BudgetView() {
                 <div>
                   <p className="font-medium">No budget yet</p>
                   <p className="text-sm text-muted-foreground">
-                    Set a monthly spending limit to track what&apos;s left to spend.
+                    Add category breakdowns below to set your budget.
                   </p>
                 </div>
-                <Button onClick={() => setDialogOpen(true)}>
-                  Set monthly budget
-                </Button>
               </div>
             ) : (
               (() => {
@@ -117,13 +118,6 @@ export function BudgetView() {
                       ) : (
                         <span />
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDialogOpen(true)}
-                      >
-                        Edit budget
-                      </Button>
                     </div>
                   </div>
                 );
@@ -138,7 +132,7 @@ export function BudgetView() {
             <Button
               size="sm"
               variant="outline"
-              disabled={!budget || loading}
+              disabled={loading}
               onClick={() => {
                 setEditing(null);
                 setCatDialogOpen(true);
@@ -149,10 +143,10 @@ export function BudgetView() {
           </CardHeader>
           <CardContent>
             {budget === null ? (
-              <p className="text-xs text-muted-foreground">Set a monthly budget first</p>
-            ) : catBudgets.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Add a category breakdown to get started.</p>
+            ) : resolvedCatBudgets.length === 0 ? (
               <p className="py-4 text-center text-xs text-muted-foreground">
-                Split your budget across categories, e.g. Food ₱3,000 of ₱10,000.
+                Add category budgets, e.g. Food ₱3,000.
               </p>
             ) : (
               <div className="space-y-3">
@@ -209,11 +203,6 @@ export function BudgetView() {
 
       <BottomNav />
 
-      <BudgetDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        initial={budget?.amount}
-      />
       <CategoryBudgetDialog
         open={catDialogOpen}
         onOpenChange={setCatDialogOpen}

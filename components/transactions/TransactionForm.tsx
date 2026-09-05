@@ -10,12 +10,10 @@ import { transactionSchema, type TransactionInput } from "@/lib/validations/tran
 import {
   addTransaction,
   updateTransaction,
-  getBudget,
-  getMonthlySpent,
   getCategoryBudgets,
   getMonthlySpentByCategory,
 } from "@/lib/db/repository";
-import { crossedTier, BUDGET_TIER_MESSAGES, budgetTierMessage } from "@/lib/budget";
+import { crossedTier, budgetTierMessage } from "@/lib/budget";
 import { categoryBudgetId } from "@/lib/db/schema";
 import { useCategories } from "@/lib/hooks/useTransactions";
 import { todayISO, monthRange } from "@/lib/format";
@@ -64,8 +62,6 @@ export function TransactionForm({ id, initial, onDone }: Props) {
   }, [typeCategories, editing, form]);
 
   const onSubmit = async (data: TransactionInput) => {
-    let limit: number | null = null;
-    let spentBefore: number | null = null;
     let catLimit: number | null = null;
     let catSpentBefore: number | null = null;
     let catLabel: string | null = null;
@@ -75,11 +71,6 @@ export function TransactionForm({ id, initial, onDone }: Props) {
       const inCurrentMonth = data.date >= start && data.date <= end;
       if (inCurrentMonth) {
         try {
-          const budget = await getBudget();
-          if (budget) {
-            limit = budget.amount;
-            spentBefore = await getMonthlySpent();
-          }
           const cat = (categories ?? []).find((c) => c.name === data.category);
           if (cat) {
             const row = (await getCategoryBudgets()).find(
@@ -92,8 +83,6 @@ export function TransactionForm({ id, initial, onDone }: Props) {
             }
           }
         } catch {
-          limit = null;
-          spentBefore = null;
           catLimit = null;
           catSpentBefore = null;
           catLabel = null;
@@ -112,21 +101,6 @@ export function TransactionForm({ id, initial, onDone }: Props) {
     } catch {
       toast.error("Something went wrong saving the transaction");
       return;
-    }
-
-    try {
-      if (limit !== null && spentBefore !== null) {
-        const spentAfter = await getMonthlySpent();
-        const crossed = crossedTier(
-          (spentBefore / limit) * 100,
-          (spentAfter / limit) * 100
-        );
-        if (crossed) {
-          toast.warning(BUDGET_TIER_MESSAGES[crossed]);
-        }
-      }
-    } catch {
-      // Budget warnings are best-effort — a failure here must not look like a save error.
     }
 
     try {

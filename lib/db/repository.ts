@@ -6,11 +6,10 @@ import {
   type Transaction,
   type Category,
   type Budget,
-  OVERALL_BUDGET_ID,
   CATEGORY_BUDGET_PREFIX,
   categoryBudgetId,
 } from "./schema";
-import { monthRange, formatPeso } from "@/lib/format";
+import { monthRange } from "@/lib/format";
 import {
   transactionSchema,
   type TransactionInput,
@@ -167,34 +166,6 @@ export async function reassignCategory(fromName: string, toName: string): Promis
   });
 }
 
-export async function getBudget(): Promise<Budget | null> {
-  const row = await db.budgets.get(OVERALL_BUDGET_ID);
-  return row ?? null;
-}
-
-export async function setBudget(amount: number): Promise<void> {
-  const now = Date.now();
-  await db.transaction("rw", db.budgets, async () => {
-    if (!(amount > 0)) throw new Error("Amount must be greater than 0");
-    const rows = await db.budgets.toArray();
-    const allocated = rows
-      .filter((r) => r.id.startsWith(CATEGORY_BUDGET_PREFIX))
-      .reduce((sum, r) => sum + r.amount, 0);
-    if (allocated > amount) {
-      throw new Error(
-        `Reduce category budgets first — ${formatPeso(allocated)} is already allocated`
-      );
-    }
-    const existing = await db.budgets.get(OVERALL_BUDGET_ID);
-    await db.budgets.put({
-      id: OVERALL_BUDGET_ID,
-      amount,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    });
-  });
-}
-
 export async function getCategoryBudgets(): Promise<Budget[]> {
   const rows = await db.budgets.toArray();
   return rows.filter((r) => r.id.startsWith(CATEGORY_BUDGET_PREFIX));
@@ -204,32 +175,17 @@ export async function setCategoryBudget(
   categoryId: string,
   amount: number
 ): Promise<void> {
-  const now = Date.now();
-  await db.transaction("rw", db.budgets, async () => {
-    if (!(amount > 0)) throw new Error("Amount must be greater than 0");
-    const overall = await db.budgets.get(OVERALL_BUDGET_ID);
-    if (!overall) throw new Error("Set a monthly budget first");
-    const rows = await db.budgets.toArray();
-    const otherTotal = rows
-      .filter(
-        (r) =>
-          r.id.startsWith(CATEGORY_BUDGET_PREFIX) &&
-          r.id !== categoryBudgetId(categoryId)
-      )
-      .reduce((sum, r) => sum + r.amount, 0);
-    if (otherTotal + amount > overall.amount) {
-      throw new Error(
-        `Exceeds the monthly budget — only ${formatPeso(overall.amount - otherTotal)} left unallocated`
-      );
-    }
-    const id = categoryBudgetId(categoryId);
-    const existing = await db.budgets.get(id);
-    await db.budgets.put({
-      id,
-      amount,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    });
+  if (!categoryId) throw new Error("Choose a category");
+  if (amount <= 0) throw new Error("Amount must be greater than 0");
+
+  const id = categoryBudgetId(categoryId);
+  const existing = await db.budgets.get(id);
+
+  await db.budgets.put({
+    id,
+    amount,
+    createdAt: existing?.createdAt ?? Date.now(),
+    updatedAt: Date.now(),
   });
 }
 
