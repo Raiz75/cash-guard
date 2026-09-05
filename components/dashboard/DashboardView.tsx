@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useCategoryBudgets, useMonthlySpent } from "@/lib/hooks/useBudget";
+import { useMonthlySpent, useTotalBudget } from "@/lib/hooks/useBudget";
 import { budgetTier } from "@/lib/budget";
 import { BAR_COLOR } from "@/components/budget/tierStyles";
 import { SpendingDonut } from "@/components/dashboard/SpendingDonut";
@@ -53,13 +53,10 @@ export function DashboardView() {
     }
   }
   const totalSpent = [...expenseByCategory.values()].reduce((s, amount) => s + amount, 0);
-  const catBudgets = useCategoryBudgets();
+  const totalBudget = useTotalBudget();
   const monthlySpent = useMonthlySpent();
-  const budgetAmount = catBudgets
-    ? catBudgets.reduce((sum, b) => sum + b.amount, 0)
-    : undefined;
-  const budget = budgetAmount !== undefined && budgetAmount > 0
-    ? { amount: budgetAmount }
+  const budget = totalBudget !== undefined && totalBudget > 0
+    ? { amount: totalBudget }
     : null;
   const slices = buildSpendingSlices([...expenseByCategory.entries()], categories);
 
