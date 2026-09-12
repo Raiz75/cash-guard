@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useMonthlySpent, useTotalBudget } from "@/lib/hooks/useBudget";
+import { useTotalBudget, useCategoryBudgets, useMonthlySpentByCategory } from "@/lib/hooks/useBudget";
+import { parseCategoryBudgetId } from "@/lib/db/schema";
 import { budgetTier } from "@/lib/budget";
 import { BAR_COLOR } from "@/components/budget/tierStyles";
 import { SpendingDonut } from "@/components/dashboard/SpendingDonut";
@@ -54,7 +55,13 @@ export function DashboardView() {
   }
   const totalSpent = [...expenseByCategory.values()].reduce((s, amount) => s + amount, 0);
   const totalBudget = useTotalBudget();
-  const monthlySpent = useMonthlySpent();
+  const catBudgets = useCategoryBudgets();
+  const spentByCat = useMonthlySpentByCategory() ?? {};
+  const resolvedCatBudgets = catBudgets ?? [];
+  const monthlySpent = resolvedCatBudgets.reduce((sum, b) => {
+    const cat = categories.find((c) => c.id === parseCategoryBudgetId(b.id));
+    return sum + (cat ? (spentByCat[cat.name] ?? 0) : 0);
+  }, 0);
   const budget = totalBudget !== undefined && totalBudget > 0
     ? { amount: totalBudget }
     : null;
@@ -86,28 +93,34 @@ export function DashboardView() {
           <Plus className="h-4 w-4" /> Add transaction
         </Button>
 
+        {budget ? (
+          <Card>
+            <CardContent className="pt-4">
+              {(() => {
+                const { pct, tier } = budgetTier(monthlySpent, budget.amount);
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-2xl font-semibold">{formatPeso(budget.amount - monthlySpent)}</p>
+                      <p className="text-xs text-muted-foreground">remaining budget this month</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatPeso(monthlySpent)} spent of {formatPeso(budget.amount)}
+                    </p>
+                    <Progress value={Math.min(pct, 100)} indicatorClassName={BAR_COLOR[tier]} />
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Spending by category</CardTitle>
             <RangeFilter value={dateFilter} onChange={setDateFilter} />
           </CardHeader>
           <CardContent>
-            {budget && monthlySpent !== undefined ? (
-              (() => {
-                const { pct, tier } = budgetTier(monthlySpent, budget.amount);
-                return (
-                  <div className="mb-4 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Monthly budget</span>
-                      <span className="tabular-nums">
-                        {formatPeso(monthlySpent)} of {formatPeso(budget.amount)} · {Math.round(pct)}% used
-                      </span>
-                    </div>
-                    <Progress value={Math.min(pct, 100)} indicatorClassName={BAR_COLOR[tier]} />
-                  </div>
-                );
-              })()
-            ) : null}
             {slices.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No expenses in this period.</p>
             ) : (

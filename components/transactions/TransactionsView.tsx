@@ -89,7 +89,7 @@ export function TransactionsView() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col pb-20">
-      <Header title="Transactions" subtitle={`${filtered.length} shown`} />
+      <Header title="Transactions" subtitle={new Date().toLocaleDateString("en-PH", { dateStyle: "long" })} />
 
       <main className="flex-1 space-y-4 px-4 pt-4">
         <Button className="w-full gap-2" onClick={openAdd}>

@@ -60,7 +60,7 @@ describe("BudgetView", () => {
   });
 
   it("shows derived total budget in top card when category budgets exist", async () => {
-    mockDb.budgets.toArray.mockResolvedValueOnce([
+    mockDb.budgets.toArray.mockResolvedValue([
       { id: "cat:c1", amount: 8000, createdAt: 1, updatedAt: 1 },
     ]);
     render(createElement(BudgetView));

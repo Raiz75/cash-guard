@@ -14,7 +14,6 @@ import { Progress } from "@/components/ui/progress";
 import { CategoryBudgetDialog } from "@/components/budget/CategoryBudgetDialog";
 import {
   useTotalBudget,
-  useMonthlySpent,
   useCategoryBudgets,
   useMonthlySpentByCategory,
 } from "@/lib/hooks/useBudget";
@@ -29,7 +28,6 @@ import { toast } from "sonner";
 
 export function BudgetView() {
   const totalBudget = useTotalBudget();
-  const spent = useMonthlySpent();
   const catBudgets = useCategoryBudgets();
   const spentByCat = useMonthlySpentByCategory() ?? {};
   const allCategories = useCategories() ?? [];
@@ -41,9 +39,14 @@ export function BudgetView() {
     year: "numeric",
   });
 
-  const loading = totalBudget === undefined || spent === undefined;
+  const loading = totalBudget === undefined;
   const hasBudget = totalBudget !== undefined && totalBudget > 0;
   const resolvedCatBudgets = catBudgets ?? [];
+
+  const filteredSpent = resolvedCatBudgets.reduce((sum, b) => {
+    const cat = allCategories.find((c) => c.id === parseCategoryBudgetId(b.id));
+    return sum + (cat ? (spentByCat[cat.name] ?? 0) : 0);
+  }, 0);
 
   const unallocated = allCategories.filter(
     (c) => c.type === "expense" && !resolvedCatBudgets.some((b) => parseCategoryBudgetId(b.id) === c.id)
@@ -89,8 +92,8 @@ export function BudgetView() {
             ) : (
               (() => {
                 const limit = totalBudget!;
-                const { pct, tier } = budgetTier(spent!, limit);
-                const remaining = limit - spent!;
+                const { pct, tier } = budgetTier(filteredSpent, limit);
+                const remaining = limit - filteredSpent;
                 return (
                   <div className="space-y-3">
                     <div className="flex items-baseline justify-between gap-2">
@@ -100,7 +103,7 @@ export function BudgetView() {
                       <p className="text-xs text-muted-foreground">remaining</p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatPeso(spent!)} spent of {formatPeso(limit)}
+                      {formatPeso(filteredSpent)} spent of {formatPeso(limit)}
                     </p>
                     <Progress
                       value={Math.min(pct, 100)}
