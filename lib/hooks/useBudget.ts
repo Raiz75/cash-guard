@@ -1,14 +1,12 @@
-/* AI-CONTEXT-NOTE:{"R":"Live-query React hooks exposing total budget (derived from category breakdowns), current-month expense total, per-category budget rows (useCategoryBudgets), and current-month spend keyed by category name (useMonthlySpentByCategory) to the Budget screen breakdown.","IDD":[{"?":"Read-only useLiveQuery — never write inside the callback (ReadonlyError)"},{"!!":"useTotalBudget derives total by summing category budgets; returns undefined while loading, 0 if no categories"},{"?":"useMonthlySpent/useCategoryBudgets/useMonthlySpentByCategory stay two-state (undefined until first tick) because empty results are meaningful; callers coerce with ?? []/?? {}"},{"?":"useCategoryBudgets filters budgets.toArray by CATEGORY_BUDGET_PREFIX client-side so category rows are namespaced"},{"?":"useMonthlySpentByCategory keys by transaction.category NAME (the schema join key), not category id"}],"A":[{"!!!":"components/budget/BudgetView.tsx","CRITICAL":"totalBudget from useTotalBudget drives the top card; spent from useMonthlySpent; catBudgets/spentByCat drive the breakdown rows"},{"!!":"Task 6 dashboard consumers","consume useCategoryBudgets + useMonthlySpentByCategory for donut/breakdown"},{"?":"tests/budgetView.test.ts","regression test mocks budgets.toArray resolving []"},{"?":"tests/categoryBudgetView.test.ts","exercises all hooks through BudgetView"}],"AB":[{"?":"lib/db/schema.ts","db instance, Budget type, CATEGORY_BUDGET_PREFIX"},{"?":"lib/format.ts","monthRange bounds the monthly queries"},{"?":"dexie-react-hooks version","API compatibility"}],"E":[{"!!":"npm test -- tests/budgetView.test.ts","empty state must render when budgets.toArray resolves []"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","breakdown rows render from toArray filtering + name-keyed spend"},{"!!":"npm run build","types must line up with number | undefined for useTotalBudget"}]} */
-
+/* AI-CONTEXT-NOTE:{"R":"TanStack Query hooks exposing total budget (derived from category budgets), current-month expense total, per-category budget rows, and current-month spend keyed by category name, all gated on the auth session.","IDD":[{"?":"Replaced dexie-react-hooks useLiveQuery with useQuery over the Supabase repository"},{"!!":"useTotalBudget derives total by summing category budgets; returns undefined while loading, 0 if no budgets"},{"?":"Every hook reads useAuth() and passes enabled: !!session so reads stay off when signed out"},{"?":"useMonthlySpentByCategory keys by transaction.category NAME (the repository join key), not category id"}],"A":[{"!!!":"components/budget/BudgetView.tsx","CRITICAL":"totalBudget from useTotalBudget drives the top card; spent from useMonthlySpent; catBudgets/spentByCat drive the breakdown rows"},{"!!":"components/dashboard/DashboardView.tsx","consumes useCategoryBudgets + useMonthlySpentByCategory"},{"?":"tests/hooks.test.ts","exercises all hooks"}],"AB":[{"?":"lib/query/client.ts","financeKeys"},{"?":"lib/db/repository.ts","getCategoryBudgets, getMonthlySpent, getMonthlySpentByCategory"},{"?":"lib/auth/AuthProvider.tsx","useAuth session gating"},{"?":"lib/db/types.ts","Budget type"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/hooks.test.ts"},{"?":"Verify useTotalBudget returns undefined while pending and 0 when loaded but empty"}]} */
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
-import {
-  db,
-  type Budget,
-  CATEGORY_BUDGET_PREFIX,
-} from "@/lib/db/schema";
-import { monthRange } from "@/lib/format";
+import { useQuery } from "@tanstack/react-query";
+
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { financeKeys } from "@/lib/query/client";
+import { getCategoryBudgets, getMonthlySpent, getMonthlySpentByCategory } from "@/lib/db/repository";
+import type { Budget } from "@/lib/db/types";
 
 export function useTotalBudget(): number | undefined {
   const catBudgets = useCategoryBudgets();
@@ -17,37 +15,28 @@ export function useTotalBudget(): number | undefined {
 }
 
 export function useMonthlySpent(): number | undefined {
-  return useLiveQuery(async () => {
-    const { start, end } = monthRange();
-    const rows = await db.transactions
-      .where("date")
-      .between(start, end, true, true)
-      .toArray();
-    return rows
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, []);
+  const { session } = useAuth();
+  return useQuery({
+    queryKey: financeKeys.monthlySpent,
+    queryFn: getMonthlySpent,
+    enabled: !!session,
+  }).data;
 }
 
 export function useCategoryBudgets(): Budget[] | undefined {
-  return useLiveQuery(async () => {
-    const rows = await db.budgets.toArray();
-    return rows.filter((r) => r.id.startsWith(CATEGORY_BUDGET_PREFIX));
-  }, []);
+  const { session } = useAuth();
+  return useQuery({
+    queryKey: financeKeys.budgets,
+    queryFn: getCategoryBudgets,
+    enabled: !!session,
+  }).data;
 }
 
 export function useMonthlySpentByCategory(): Record<string, number> | undefined {
-  return useLiveQuery(async () => {
-    const { start, end } = monthRange();
-    const rows = await db.transactions
-      .where("date")
-      .between(start, end, true, true)
-      .toArray();
-    const spent: Record<string, number> = {};
-    for (const t of rows) {
-      if (t.type === "expense")
-        spent[t.category] = (spent[t.category] ?? 0) + t.amount;
-    }
-    return spent;
-  }, []);
+  const { session } = useAuth();
+  return useQuery({
+    queryKey: financeKeys.monthlySpentByCategory,
+    queryFn: getMonthlySpentByCategory,
+    enabled: !!session,
+  }).data;
 }
