@@ -33,14 +33,14 @@ interface FakeBuilder {
 interface FakeState {
   tables: { [key: string]: Record<string, unknown>[]; categories: Record<string, unknown>[]; transactions: Record<string, unknown>[]; budgets: Record<string, unknown>[] };
   failNext: { code: string; message: string } | null;
-  inserts: { table: string; rows: Record<string, unknown>[] }[];
+  inserts: { table: string; rows: Record<string, unknown>[]; options?: { onConflict?: string } }[];
 }
 
 const { client, state } = vi.hoisted(() => {
   const state: FakeState = {
     tables: { categories: [] as Record<string, unknown>[], transactions: [] as Record<string, unknown>[], budgets: [] as Record<string, unknown>[] },
     failNext: null as { code: string; message: string } | null,
-    inserts: [] as Array<{ table: string; rows: Record<string, unknown>[] }>,
+    inserts: [] as Array<{ table: string; rows: Record<string, unknown>[]; options?: { onConflict?: string } }>,
   };
 
   function applyFilter(row: Record<string, unknown>, f: { col: string; op: string; val: unknown }): boolean {
@@ -100,7 +100,7 @@ const { client, state } = vi.hoisted(() => {
         return row;
       });
       store.push(...inserted);
-      state.inserts.push({ table, rows: inserted });
+      state.inserts.push({ table, rows: inserted, options: b.upsertOptions as { onConflict?: string } | undefined });
       if (b.singleFlag) return { data: inserted[0] ?? null, error: null, count: inserted.length };
       if (b.returning) return { data: inserted, error: null, count: inserted.length };
       return { data: null, error: null, count: inserted.length };
@@ -128,7 +128,7 @@ const { client, state } = vi.hoisted(() => {
         store.push(row);
         inserted.push(row);
       }
-      state.inserts.push({ table, rows: inserted });
+      state.inserts.push({ table, rows: inserted, options: b.upsertOptions as { onConflict?: string } | undefined });
       if (b.singleFlag) return { data: inserted[0] ?? null, error: null, count: inserted.length };
       if (b.returning) return { data: inserted, error: null, count: inserted.length };
       return { data: null, error: null, count: inserted.length };
@@ -262,6 +262,7 @@ import {
 } from "@/lib/db/repository";
 import { monthRange } from "@/lib/format";
 import type { CsvRow } from "@/lib/csv";
+import { invalidateFinance } from "@/lib/query/client";
 
 
 beforeEach(() => {
@@ -449,6 +450,8 @@ describe("setCategoryBudget", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].amount).toBe(4500);
     expect(rows[0].createdAt).toBe(created);
+    const budgetInsert = state.inserts.find((i) => i.table === "budgets");
+    expect(budgetInsert?.options).toEqual({ onConflict: "user_id,category_id" });
   });
 });
 
@@ -533,6 +536,7 @@ describe("importTransactions", () => {
     expect(result.createdCategories).toEqual(["Salary", "Food"]);
     expect(state.tables.transactions).toHaveLength(2);
     expect(state.tables.categories).toHaveLength(2);
+    expect(invalidateFinance).toHaveBeenCalled();
   });
 
   it("skips invalid rows", async () => {
@@ -547,6 +551,16 @@ describe("importTransactions", () => {
     expect(result.skipped).toBe(3);
     expect(result.createdCategories).toEqual(["Food"]);
     expect(state.tables.transactions).toHaveLength(1);
+  });
+
+  it("does not invalidate on all-invalid batch", async () => {
+    const rows = [
+      { type: "income", amount: 0, category: "Salary", date: "2024-06-01" },
+      { type: "bogus", amount: 100, category: "Salary", date: "2024-06-01" },
+    ];
+    const result = await importTransactions(rows as CsvRow[]);
+    expect(result.imported).toBe(0);
+    expect(invalidateFinance).not.toHaveBeenCalled();
   });
 
   it("dedupes existing and within-batch UUIDs", async () => {
@@ -569,6 +583,7 @@ describe("importTransactions", () => {
     const result = await importTransactions([]);
     expect(result).toEqual({ imported: 0, skipped: 0, createdCategories: [] });
     expect(state.inserts).toHaveLength(0);
+    expect(invalidateFinance).not.toHaveBeenCalled();
   });
 
   it("reuses stored category case-insensitively", async () => {

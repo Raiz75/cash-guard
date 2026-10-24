@@ -269,6 +269,9 @@ export async function exportData(): Promise<{ transactions: Transaction[]; categ
 export async function importTransactions(
   rows: CsvRow[]
 ): Promise<{ imported: number; skipped: number; createdCategories: string[] }> {
+  if (rows.length === 0) {
+    return { imported: 0, skipped: 0, createdCategories: [] };
+  }
   const { data: existingRows, error: existingError } = await getSupabase()
     .from("transactions")
     .select("id");
@@ -377,6 +380,8 @@ export async function importTransactions(
     }
   }
 
-  await invalidateFinance();
+  if (imported > 0) {
+    await invalidateFinance();
+  }
   return { imported, skipped, createdCategories };
 }
