@@ -106,14 +106,15 @@ These are the failure modes the spec implies but no single requirement names. Ea
   - `lib/query/client.ts`: `queryClient: QueryClient`, `financeKeys`, `invalidateFinance(): Promise<void>`.
   - `components/providers/QueryProvider.tsx`: `QueryProvider({ children })`.
 
-- [ ] **Step 1: Add/replace dependencies**
+- [ ] **Step 1: Add dependencies**
 
 Run:
 ```bash
-npm uninstall dexie dexie-react-hooks uuid @types/uuid
 npm install @supabase/supabase-js @tanstack/react-query
 ```
 Keep Node >= 20.9. Do not add `@supabase/ssr` — there is no server data layer.
+
+Do **not** uninstall Dexie here: `lib/db/schema.ts` and the live-query hooks still import `dexie`, `dexie-react-hooks`, and `uuid` until Tasks 4 and 8, so removing them now would break `npm run build`. The removal is Task 8 Step 6.
 
 - [ ] **Step 2: Write the failing client test**
 
@@ -989,7 +990,7 @@ git commit -m "feat(settings): add account card and use category ids for edit/de
 - Delete: `lib/db/schema.ts`
 - Modify: `lib/csv.ts`, `lib/validations/transaction.ts`, `components/shared/CategoryIcon.tsx` (notes only if no code imports remain)
 - Modify: `AGENTS.md`, `CLAUDE.md`, `README.md`
-- Modify: `package.json` (version)
+- Modify: `package.json` (remove Dexie-era deps, version)
 - Build-stamped: `public/sw.js`, `public/manifest.webmanifest`, `lib/version.ts`
 
 **Interfaces:**
@@ -1034,11 +1035,19 @@ Replace the "runs entirely in your browser / no account / IndexedDB" claims with
 - CSV export/import remains available as a backup;
 - stack table: Supabase (Postgres + Auth) and TanStack Query instead of Dexie.
 
-- [ ] **Step 6: Bump the version**
+- [ ] **Step 6: Remove the Dexie-era dependencies**
+
+Run:
+```bash
+npm uninstall dexie dexie-react-hooks uuid @types/uuid
+```
+This must come after `lib/db/schema.ts` is deleted (Step 2) and after the hooks/components stopped importing Dexie (Tasks 4-7), otherwise the build breaks.
+
+- [ ] **Step 7: Bump the version**
 
 Set `"version": "2.0.0"` in `package.json`.
 
-- [ ] **Step 7: Run full verification**
+- [ ] **Step 8: Run full verification**
 
 Run:
 ```bash
@@ -1052,7 +1061,7 @@ Expected:
 - lint clean;
 - all tests PASS.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add lib/db/schema.ts lib/csv.ts lib/validations/transaction.ts components/shared/CategoryIcon.tsx AGENTS.md CLAUDE.md README.md package.json package-lock.json public/sw.js public/manifest.webmanifest lib/version.ts
