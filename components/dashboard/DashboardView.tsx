@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc, each row leading with a color dot matching its slice fill; card header has no Total row because the donut center shows the total — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"},{"?":"DateFilter replaces old DateRange — supports all/today/bydate/daterange with calendar pickers"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useBudget, useMonthlySpent feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, rangeEndDateISO, DateFilter"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/schema.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty DB (Add your first transaction)"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Dashboard page with total balance, add-transaction shortcut, monthly budget meter plus spending donut with all-category legend under a range filter, and recent transactions.","IDD":[{"?":"Registers the service worker (public/sw.js) in production only"},{"?":"Budget indicator renders only once budget is non-null AND monthlySpent resolved (undefined means still loading); it always reports month-to-date spend even when the range filter reslices the chart"},{"?":"Slices come from buildSpendingSlices (descending sort, stored category color or cycling --chart fallback); legend lists ALL categories sorted desc, each row leading with a color dot matching its slice fill; card header has no Total row because the donut center shows the total — no top-5 cap"},{"?":"Add-transaction button is a Link to /transactions?add=1 via Base UI Button render prop with nativeButton=false"},{"?":"DateFilter replaces old DateRange — supports all/today/bydate/daterange with calendar pickers"}],"A":[{"?":"app/page.tsx","rendered here"},{"!!!":"public/sw.js","CRITICAL":"this file registers the service worker"}],"AB":[{"?":"lib/hooks/useTransactions.ts","useTransactions, useRecentTransactions, useCategories"},{"?":"lib/hooks/useBudget.ts","useTotalBudget, useCategoryBudgets, useMonthlySpentByCategory feed the budget meter"},{"?":"lib/budget.ts","budgetTier drives Progress tier coloring"},{"?":"components/budget/tierStyles.ts","BAR_COLOR keys off BudgetTier"},{"?":"lib/spending.ts","buildSpendingSlices/slicePercent shape the donut data and legend percentages"},{"?":"components/dashboard/SpendingDonut.tsx","renders slices with centered total"},{"?":"components/ui/progress.tsx","indicatorClassName support required for BAR_COLOR"},{"?":"lib/format.ts","formatPeso, rangeStartISO, rangeEndDateISO, DateFilter"},{"?":"components/shared/","Header, BottomNav, CategoryIcon, RangeFilter"},{"?":"lib/db/types.ts","Transaction/Category types"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"!!":"npm test -- tests/spending.test.ts","slice builder contract consumed here"},{"?":"Verify SW registers only in production; indicator hidden while budget/monthlySpent load; legend shows all categories sorted descending with correct percents"},{"*":"Recent-transactions list must handle an empty transaction list (Add your first transaction)"}]} */
 
 "use client";
 
@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useTotalBudget, useCategoryBudgets, useMonthlySpentByCategory } from "@/lib/hooks/useBudget";
-import { parseCategoryBudgetId } from "@/lib/db/schema";
+import type { Category } from "@/lib/db/types";
 import { budgetTier } from "@/lib/budget";
 import { BAR_COLOR } from "@/components/budget/tierStyles";
 import { SpendingDonut } from "@/components/dashboard/SpendingDonut";
@@ -37,7 +37,7 @@ export function DashboardView() {
 
   const all = useTransactions() ?? [];
   const recent = useRecentTransactions(5) ?? [];
-  const categories = useCategories() ?? [];
+  const categories: Category[] = useCategories() ?? [];
 
   const totalIncome = all.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const totalExpense = all.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
@@ -59,7 +59,7 @@ export function DashboardView() {
   const spentByCat = useMonthlySpentByCategory() ?? {};
   const resolvedCatBudgets = catBudgets ?? [];
   const monthlySpent = resolvedCatBudgets.reduce((sum, b) => {
-    const cat = categories.find((c) => c.id === parseCategoryBudgetId(b.id));
+    const cat = categories.find((c) => c.id === b.categoryId);
     return sum + (cat ? (spentByCat[cat.name] ?? 0) : 0);
   }, 0);
   const budget = totalBudget !== undefined && totalBudget > 0
