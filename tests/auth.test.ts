@@ -271,4 +271,33 @@ describe("AuthProvider StrictMode safety", () => {
     });
     expect(qc.getQueryData(["transactions"])).toBeUndefined();
   });
+
+  it("does not clear the cache when the auth callback fires after unmount", async () => {
+    const qc = new QueryClient();
+    const clearSpy = vi.spyOn(qc, "clear");
+
+    mocks.supabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: "u1" } } },
+    });
+
+    const { unmount } = wrap(
+      createElement(AuthGate, null, createElement("div", null, "Dashboard content")),
+      qc
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Dashboard content")).toBeInTheDocument();
+    });
+
+    const callback = mocks.authCallback;
+    unmount();
+
+    act(() => {
+      callback?.("SIGNED_IN", { user: { id: "u2" } });
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(clearSpy).not.toHaveBeenCalled();
+  });
 });

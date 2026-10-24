@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"React context providing the Supabase session, loading flag, and config error; gates the app and clears the query cache on user change.","IDD":[{"?":"Async IIFE in useEffect avoids synchronous setState in the effect body (lint rule)"},{"?":"applySession clears the query client only when the user id changes away from a non-null id"},{"?":"deleteLegacyDatabase is invoked once on mount"},{"?":"useQueryClient (context) is used, not the module singleton, so tests can assert clear"}],"A":[{"!!!":"components/auth/AuthGate.tsx","CRITICAL":"consumes useAuth"},{"!!!":"app/layout.tsx","CRITICAL":"wraps the tree in AuthProvider"},{"?":"tests/auth.test.ts","asserts session/config/loading/cache-clear"}],"AB":[{"?":"lib/supabase/client.ts","getSupabase may throw when env missing"},{"?":"lib/legacyCleanup.ts","deleteLegacyDatabase"},{"?":"@tanstack/react-query","useQueryClient"}],"E":[{"!!":"npm test -- tests/auth.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
+/* AI-CONTEXT-NOTE:{"R":"React context providing the Supabase session, loading flag, and config error; gates the app and clears the query cache on user change.","IDD":[{"?":"Async IIFE in useEffect avoids synchronous setState in the effect body (lint rule)"},{"?":"StrictMode cancellation guard prevents stale mounts from subscribing or setting state after cleanup"},{"?":"applySession clears the query client only when the user id changes away from a non-null id to prevent cross-user cache leaks"},{"?":"deleteLegacyDatabase is invoked once on mount"},{"?":"useQueryClient (context) is used, not the module singleton, so tests can assert clear"}],"A":[{"!!!":"components/auth/AuthGate.tsx","CRITICAL":"consumes useAuth"},{"!!!":"app/layout.tsx","CRITICAL":"wraps the tree in AuthProvider"},{"?":"tests/auth.test.ts","asserts session/config/loading/cache-clear"}],"AB":[{"?":"lib/supabase/client.ts","getSupabase may throw when env missing"},{"?":"lib/legacyCleanup.ts","deleteLegacyDatabase"},{"?":"@tanstack/react-query","useQueryClient"}],"E":[{"!!":"npm test -- tests/auth.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
 "use client";
 
 import {
@@ -86,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data: subscriptionData } = supabase.auth.onAuthStateChange(
         (_event, nextSession) => {
+          if (cancelled) return;
           applySession((nextSession as Session | null) ?? null);
         }
       );
