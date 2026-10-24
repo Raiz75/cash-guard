@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void deleteLegacyDatabase();
 
+    let cancelled = false;
     let unsubscribe: (() => void) | undefined;
 
     (async () => {
@@ -61,29 +62,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         supabase = getSupabase();
       } catch (error) {
+        if (!cancelled) {
+          setConfigError(error instanceof Error ? error.message : String(error));
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (cancelled) return;
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        applySession((data?.session as Session | null) ?? null);
+      } catch (error) {
+        if (cancelled) return;
         setConfigError(error instanceof Error ? error.message : String(error));
         setLoading(false);
         return;
       }
 
-      try {
-        const { data } = await supabase.auth.getSession();
-        applySession((data?.session as Session | null) ?? null);
-      } catch (error) {
-        setConfigError(error instanceof Error ? error.message : String(error));
-        setLoading(false);
-        return;
-      }
+      if (cancelled) return;
 
       const { data: subscriptionData } = supabase.auth.onAuthStateChange(
         (_event, nextSession) => {
           applySession((nextSession as Session | null) ?? null);
         }
       );
+
+      if (cancelled) {
+        subscriptionData.subscription.unsubscribe();
+        return;
+      }
+
       unsubscribe = () => subscriptionData.subscription.unsubscribe();
     })();
 
     return () => {
+      cancelled = true;
       unsubscribe?.();
     };
   }, [applySession]);

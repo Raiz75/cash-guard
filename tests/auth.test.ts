@@ -221,3 +221,54 @@ describe("AuthScreen", () => {
     });
   });
 });
+
+describe("AuthProvider StrictMode safety", () => {
+  it("does not subscribe or set state when unmounted before getSession resolves", async () => {
+    let resolveSession: ((value: unknown) => void) | undefined;
+    const sessionPromise = new Promise((resolve) => {
+      resolveSession = resolve;
+    });
+    mocks.supabase.auth.getSession.mockReturnValue(sessionPromise);
+    mocks.supabase.auth.onAuthStateChange.mockClear();
+
+    const { unmount } = wrap(
+      createElement(AuthGate, null, createElement("div", null, "Dashboard content"))
+    );
+
+    unmount();
+    resolveSession?.({ data: { session: { user: { id: "u1" } } } });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mocks.supabase.auth.onAuthStateChange).not.toHaveBeenCalled();
+  });
+
+  it("clears the cache when switching from one non-null user to another", async () => {
+    const qc = new QueryClient();
+    const clearSpy = vi.spyOn(qc, "clear");
+
+    mocks.supabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: "u1" } } },
+    });
+
+    wrap(
+      createElement(AuthGate, null, createElement("div", null, "Dashboard content")),
+      qc
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Dashboard content")).toBeInTheDocument();
+    });
+
+    qc.setQueryData(["transactions"], [{ id: "t1" }]);
+
+    act(() => {
+      mocks.authCallback?.("SIGNED_IN", { user: { id: "u2" } });
+    });
+
+    await waitFor(() => {
+      expect(clearSpy).toHaveBeenCalled();
+    });
+    expect(qc.getQueryData(["transactions"])).toBeUndefined();
+  });
+});

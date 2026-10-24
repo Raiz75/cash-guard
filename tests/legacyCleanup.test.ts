@@ -30,4 +30,24 @@ describe("deleteLegacyDatabase", () => {
     vi.stubGlobal("indexedDB", undefined);
     await expect(deleteLegacyDatabase()).resolves.toBeUndefined();
   });
+
+  it("triggers deleteDatabase only once across repeated calls", async () => {
+    const req: { onsuccess: (() => void) | null; onerror: (() => void) | null; onblocked: (() => void) | null } = {
+      onsuccess: null,
+      onerror: null,
+      onblocked: null,
+    };
+    const deleteDatabase = vi.fn(() => {
+      queueMicrotask(() => {
+        req.onsuccess?.();
+      });
+      return req;
+    });
+    vi.stubGlobal("indexedDB", { deleteDatabase });
+
+    await deleteLegacyDatabase();
+    await deleteLegacyDatabase();
+
+    expect(deleteDatabase).toHaveBeenCalledTimes(1);
+  });
 });
