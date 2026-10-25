@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Tests components/shared/DataError.tsx + lib/hooks/useFinanceError.ts rendering and retry.","IDD":[{"?":"Wraps in a fresh QueryClient with retry:false"}],"A":[{"!!":"components/shared/DataError.tsx","CRITICAL":"error surface and retry"},{"!!":"lib/hooks/useFinanceError.ts","CRITICAL":"error scanning"}],"AB":[{"?":"@tanstack/react-query","QueryClientProvider"}],"E":[{"!!":"npm test -- tests/dataError.test.ts"}]} */
 import { describe, it, expect, vi } from "vitest";
 import { createElement } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";

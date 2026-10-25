@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Tests components/shared/OfflineBanner.tsx online/offline toggling via window events.","IDD":[{"?":"Mutable navigator.onLine getter drives useSyncExternalStore snapshot"}],"A":[{"!!":"components/shared/OfflineBanner.tsx","CRITICAL":"banner copy and role"}],"AB":[{"?":"vitest happy-dom env","window events"}],"E":[{"!!":"npm test -- tests/offline.test.ts"}]} */
 import { describe, it, expect, beforeEach } from "vitest";
 import { createElement } from "react";
 import { render, screen, act } from "@testing-library/react";

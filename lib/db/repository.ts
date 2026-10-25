@@ -1,19 +1,35 @@
-/* AI-CONTEXT-NOTE:{"R":"The only module that talks to Postgres via Supabase PostgREST — CRUD for transactions/categories, per-category budgets, monthly spend, CSV import/export, and category reassignment.","IDD":[{"?":"All reads/writes go through getSupabase(); RLS scopes rows to the signed-in user"},{"?":"Writes never send user_id; the DB defaults it to auth.uid()"},{"?":"Every successful write ends with await invalidateFinance() to refresh TanStack Query caches"},{"?":"Transactions reference categories by category_id; display name is derived via the transactions_category_fk embed"},{"?":"Category rename does not touch transactions because the name is derived through the FK"},{"?":"CSV import collects new categories, batch-inserts them once, then inserts transactions in 500-row chunks"},{"?":"toError/categoryError/deleteCategoryError map PostgREST error codes to user-facing messages"}],"A":[{"!!!":"components/transactions/TransactionForm.tsx","CRITICAL":"addTransaction/updateTransaction"},{"!!!":"components/settings/SettingsView.tsx","CRITICAL":"importTransactions/exportData/deleteCategory/reassignCategory"},{"!!":"components/budget/BudgetView.tsx","deleteCategoryBudget, setCategoryBudget"},{"!!":"components/budget/CategoryBudgetDialog.tsx","setCategoryBudget"},{"!!":"lib/hooks/useBudget.ts","indirect via repository"},{"!":"tests/repository.test.ts","exercises all functions"},{"?":"lib/csv.ts","CsvRow shape"}],"AB":[{"?":"lib/supabase/client.ts","getSupabase"},{"?":"lib/query/client.ts","invalidateFinance"},{"?":"lib/db/types.ts","domain types"},{"?":"lib/format.ts","monthRange"},{"?":"lib/validations/transaction.ts","schemas"}],"E":[{"!!":"npm test -- tests/repository.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify chunk sizes, UUID handling, error mapping"}]} */
 import { getSupabase } from "@/lib/supabase/client";
 import { invalidateFinance } from "@/lib/query/client";
 import { monthRange } from "@/lib/format";
-import { transactionSchema, type TransactionInput, type CategoryInput } from "@/lib/validations/transaction";
+import { csvRowSchema, type TransactionInput, type CategoryInput } from "@/lib/validations/transaction";
 import type { CsvRow } from "@/lib/csv";
 import type { Category, Transaction, Budget, TransactionType } from "@/lib/db/types";
 
 const TRANSACTION_SELECT =
   "id, type, amount, category_id, description, date, created_at, categories!transactions_category_fk(name)";
 const CHUNK_SIZE = 500;
+const PAGE_SIZE = 1000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface PageQuery<T> {
+  range: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>;
+}
 
 function toError(error: unknown, fallback: string): Error {
   const msg = (error as { message?: string } | null | undefined)?.message;
   return new Error(msg?.trim() || fallback);
+}
+
+async function fetchAllPages<T>(buildPage: () => PageQuery<T>, fallback: string): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    // A fresh builder per page: PostgREST merges repeated .range() calls on the same builder.
+    const { data, error } = await buildPage().range(from, from + PAGE_SIZE - 1);
+    if (error) throw toError(error, fallback);
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < PAGE_SIZE) return rows;
+  }
 }
 
 function categoryError(error: unknown): Error {
@@ -84,13 +100,14 @@ export async function listCategories(): Promise<Category[]> {
 }
 
 export async function listTransactions(): Promise<Transaction[]> {
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .select(TRANSACTION_SELECT)
-    .order("date", { ascending: false })
-    .order("created_at", { ascending: false });
-  if (error) throw toError(error, "Failed to load transactions");
-  return (data ?? []).map(mapTransactionRow);
+  const buildPage = () =>
+    getSupabase()
+      .from("transactions")
+      .select(TRANSACTION_SELECT)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+  const rows = await fetchAllPages(buildPage, "Failed to load transactions");
+  return rows.map(mapTransactionRow);
 }
 
 export async function addTransaction(input: TransactionInput): Promise<Transaction> {
@@ -245,15 +262,16 @@ export async function getMonthlySpent(): Promise<number> {
 
 export async function getMonthlySpentByCategory(): Promise<Record<string, number>> {
   const { start, end } = monthRange();
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .select(TRANSACTION_SELECT)
-    .eq("type", "expense")
-    .gte("date", start)
-    .lte("date", end);
-  if (error) throw toError(error, "Failed to load monthly spend");
+  const buildPage = () =>
+    getSupabase()
+      .from("transactions")
+      .select(TRANSACTION_SELECT)
+      .eq("type", "expense")
+      .gte("date", start)
+      .lte("date", end);
+  const rows = await fetchAllPages(buildPage, "Failed to load monthly spend");
   const spent: Record<string, number> = {};
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const mapped = mapTransactionRow(row);
     const name = mapped.category;
     spent[name] = (spent[name] ?? 0) + mapped.amount;
@@ -272,10 +290,9 @@ export async function importTransactions(
   if (rows.length === 0) {
     return { imported: 0, skipped: 0, createdCategories: [] };
   }
-  const { data: existingRows, error: existingError } = await getSupabase()
-    .from("transactions")
-    .select("id");
-  if (existingError) throw toError(existingError, "Failed to load transactions");
+  const buildPage = () =>
+    getSupabase().from("transactions").select("id");
+  const existingRows = await fetchAllPages(buildPage, "Failed to load transactions");
   const existingIds = new Set((existingRows ?? []).map((r) => String(r.id).toLowerCase()));
 
   const categories = await listCategories();
@@ -298,7 +315,7 @@ export async function importTransactions(
   let skipped = 0;
 
   for (const row of rows) {
-    const parsed = transactionSchema.safeParse(row);
+    const parsed = csvRowSchema.safeParse(row);
     if (!parsed.success) {
       skipped++;
       continue;
@@ -371,17 +388,26 @@ export async function importTransactions(
   }
 
   let imported = 0;
-  if (toAdd.length > 0) {
-    for (let i = 0; i < toAdd.length; i += CHUNK_SIZE) {
-      const chunk = toAdd.slice(i, i + CHUNK_SIZE);
-      const { error } = await getSupabase().from("transactions").insert(chunk);
-      if (error) throw toError(error, "Failed to import transactions");
-      imported += chunk.length;
+  try {
+    if (toAdd.length > 0) {
+      for (let i = 0; i < toAdd.length; i += CHUNK_SIZE) {
+        const chunk = toAdd.slice(i, i + CHUNK_SIZE);
+        const { error } = await getSupabase().from("transactions").insert(chunk);
+        if (error && (error as { code?: string }).code === "23505") {
+          // Retry once with fresh UUIDs for the whole chunk.
+          const retryChunk = chunk.map((row) => ({ ...row, id: crypto.randomUUID() }));
+          const { error: retryError } = await getSupabase().from("transactions").insert(retryChunk);
+          if (retryError) throw toError(retryError, "Failed to import transactions");
+        } else if (error) {
+          throw toError(error, "Failed to import transactions");
+        }
+        imported += chunk.length;
+      }
     }
-  }
-
-  if (imported > 0) {
-    await invalidateFinance();
+  } finally {
+    if (imported > 0) {
+      await invalidateFinance();
+    }
   }
   return { imported, skipped, createdCategories };
 }

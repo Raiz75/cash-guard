@@ -1,7 +1,6 @@
-/* AI-CONTEXT-NOTE:{"R":"Gate component: shows loading skeleton, config error card, or AuthScreen based on auth state; renders the online/error shell plus children when authenticated.","IDD":[{"?":"Consumes useAuth from AuthProvider"},{"?":"Authenticated branch renders OfflineBanner and DataError before children"}],"A":[{"!!!":"app/layout.tsx","CRITICAL":"wraps children with AuthGate"},{"!!":"components/auth/AuthScreen.tsx","CRITICAL":"shown when unauthenticated"},{"?":"tests/auth.test.ts","asserts loading/config/session branches"}],"AB":[{"?":"lib/auth/AuthProvider.tsx","useAuth"},{"?":"components/shared/OfflineBanner.tsx","online banner"},{"?":"components/shared/DataError.tsx","error surface"}],"E":[{"!!":"npm test -- tests/auth.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
 "use client";
 
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AuthScreen } from "@/components/auth/AuthScreen";
@@ -25,8 +24,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <Card className="w-full max-w-md">
-          <CardContent>
+          <CardHeader>
             <CardTitle className="mb-2">Configuration error</CardTitle>
+          </CardHeader>
+          <CardContent>
             <p className="text-sm text-muted-foreground">{configError}</p>
           </CardContent>
         </Card>

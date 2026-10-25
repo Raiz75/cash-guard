@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Hook returning the first errored finance query (if any) plus a retry that invalidates all queries; drives the DataError surface.","IDD":[{"?":"Subscribes to the TanStack Query cache via useSyncExternalStore so DataError re-renders on cache changes"},{"?":"Scans Object.values(financeKeys) for status === error and normalizes the message"}],"A":[{"!!":"components/shared/DataError.tsx","CRITICAL":"consumes this hook"},{"?":"tests/dataError.test.ts","asserts message and retry refetch"}],"AB":[{"?":"lib/query/client.ts","financeKeys and queryClient context"},{"?":"@tanstack/react-query","useQueryClient, cache subscription"}],"E":[{"!!":"npm test -- tests/dataError.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";

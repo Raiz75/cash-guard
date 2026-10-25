@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Pinned offline indicator shown in the app shell when navigator.onLine is false; uses useSyncExternalStore to avoid setState-in-effect.","IDD":[{"?":"Subscribes to window online/offline events; client snapshot reflects navigator.onLine, server snapshot assumes online"}],"A":[{"!!":"components/auth/AuthGate.tsx","CRITICAL":"renders OfflineBanner in the authenticated shell"},{"?":"tests/offline.test.ts","asserts copy and role"}],"AB":[{"?":"React useSyncExternalStore","subscription API"}],"E":[{"!!":"npm test -- tests/offline.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
 "use client";
 
 import { useSyncExternalStore } from "react";

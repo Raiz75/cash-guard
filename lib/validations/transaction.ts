@@ -1,6 +1,13 @@
-/* AI-CONTEXT-NOTE:{"R":"Zod schemas (transactionSchema, categorySchema) and their inferred input types used by every form and by CSV import validation.","IDD":[{"?":"transactionSchema coerces amount to a positive number and allows an optional id, so the same schema validates both forms and imported CSV rows."},{"?":"TransactionInput / CategoryInput are inferred (z.infer) so validation and types can never drift apart."}],"A":[{"!!!":"components/transactions/TransactionForm.tsx","CRITICAL":"resolver + TransactionInput"},{"!!!":"lib/db/repository.ts","CRITICAL":"safeParse gates every imported row"},{"?":"components/settings/SettingsView.tsx","Uses categorySchema + CategoryInput"},{"?":"components/settings/CategoryEditDialog.tsx","Uses categorySchema"}],"AB":[{"?":"zod version"},{"?":"lib/db/types.ts","Field shapes should mirror these"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Changing a field must be reflected in forms, repository writes, and import parsing"},{"*":"description max length (200) and amount positivity are user-facing messages — keep them"}]} */
-
 import { z } from "zod";
+
+const YYYY_MM_DD = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidCalendarDate(dateStr: string): boolean {
+  if (!YYYY_MM_DD.test(dateStr)) return false;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
 
 export const transactionSchema = z.object({
   id: z.string().min(1).optional(),
@@ -11,7 +18,13 @@ export const transactionSchema = z.object({
   date: z.string().min(1, "Date is required"),
 });
 
+export const csvRowSchema = transactionSchema.refine(
+  (data) => isValidCalendarDate(data.date),
+  { message: "Date must be a valid calendar date in YYYY-MM-DD format", path: ["date"] }
+);
+
 export type TransactionInput = z.infer<typeof transactionSchema>;
+export type CsvRowInput = z.infer<typeof csvRowSchema>;
 
 export const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),

@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Renders a Could not load your data surface with the normalized error message and a Retry button when any finance query is in error state; renders nothing otherwise.","IDD":[{"?":"Delegates detection to useFinanceError; Retry invalidates the query cache"}],"A":[{"!!":"components/auth/AuthGate.tsx","CRITICAL":"renders DataError in the authenticated shell"},{"?":"tests/dataError.test.ts","asserts message and retry refetch"}],"AB":[{"?":"lib/hooks/useFinanceError.ts","error scanning and retry"}],"E":[{"!!":"npm test -- tests/dataError.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
 "use client";
 
 import { Button } from "@/components/ui/button";

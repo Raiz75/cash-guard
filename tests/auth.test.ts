@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Tests lib/auth/AuthProvider.tsx, components/auth/AuthGate.tsx, components/auth/AuthScreen.tsx.","IDD":[{"?":"Mocks @/lib/supabase/client and @/lib/legacyCleanup"},{"?":"Captures onAuthStateChange callback to simulate SIGNED_OUT"}],"A":[{"!!":"lib/auth/AuthProvider.tsx","CRITICAL":"auth context"},{"!!":"components/auth/AuthGate.tsx","CRITICAL":"gate"},{"!!":"components/auth/AuthScreen.tsx","CRITICAL":"auth form"}],"AB":[{"?":"@tanstack/react-query","QueryClientProvider"}],"E":[{"!!":"npm test -- tests/auth.test.ts"}]} */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createElement } from "react";
 import type { ReactNode } from "react";

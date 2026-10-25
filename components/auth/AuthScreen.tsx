@@ -1,4 +1,3 @@
-/* AI-CONTEXT-NOTE:{"R":"Email/password sign-in and sign-up screen with tabs, inline validation, loading copy, and a check-email notice; no Header/BottomNav.","IDD":[{"?":"Controlled Tabs with mode coerced via ?? signin for Base UI null values"},{"?":"Submit handlers wrap Supabase auth calls in try/catch/finally and surface errors in role=alert"},{"?":"Sign-up without a returned session shows the check-email notice"}],"A":[{"!!":"components/auth/AuthGate.tsx","CRITICAL":"renders AuthScreen when unauthenticated"},{"?":"tests/auth.test.ts","asserts error/notice copy and tabs"}],"AB":[{"?":"lib/supabase/client.ts","getSupabase auth methods"},{"?":"components/ui/tabs.tsx, button.tsx, input.tsx, label.tsx","UI primitives"}],"E":[{"!!":"npm test -- tests/auth.test.ts"},{"!!":"npm run build"},{"!!":"npm run lint"}]} */
 "use client";
 
 import { useState } from "react";
@@ -15,6 +14,12 @@ export function AuthScreen() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  function handleTabChange(value: string) {
+    setMode((value ?? "signin") as "signin" | "signup");
+    setError(null);
+    setNotice(null);
+  }
 
   async function handleSignIn(event: React.FormEvent) {
     event.preventDefault();
@@ -58,10 +63,7 @@ export function AuthScreen() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 py-8">
-      <Tabs
-        value={mode}
-        onValueChange={(value) => setMode((value ?? "signin") as "signin" | "signup")}
-      >
+      <Tabs value={mode} onValueChange={handleTabChange}>
         <TabsList className="w-full">
           <TabsTrigger value="signin" className="flex-1">
             Sign in
