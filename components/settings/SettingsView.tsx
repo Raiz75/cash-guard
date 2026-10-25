@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Settings page for category add/edit/delete, CSV export/import, account sign-out, update check with restart dialog and current app version.","IDD":[{"?":"Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field"},{"?":"Edit/delete gates are async: transactionCountForCategory decides if a category is in use before opening its dialog (by id)"},{"?":"Export builds CSV inline (with # Exported timestamp) and downloads via downloadFile with a date-stamped filename"},{"?":"Import parses via parseTransactionsCSV then importTransactions"},{"?":"Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads"},{"?":"Account card shows the signed-in email and calls getSupabase().auth.signOut()"}],"A":[{"!!!":"app/settings/page.tsx","CRITICAL":"rendered by the route"},{"?":"CategoryEditDialog and DeleteCategoryDialog","opened from the category list"}],"AB":[{"?":"lib/hooks/useServiceWorkerUpdate.ts","update status/actions"},{"?":"lib/version.ts","generated APP_VERSION constant shown in Update card"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/auth/AuthProvider.tsx","useAuth session for the account card"},{"?":"lib/supabase/client.ts","getSupabase signOut"},{"?":"lib/csv.ts","parseTransactionsCSV"},{"?":"lib/db/repository.ts","addCategory, exportData, importTransactions, transactionCountForCategory"},{"?":"lib/format.ts","downloadFile, todayISO"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/types.ts","Category type"},{"?":"components/shared (Header, BottomNav, CategoryIcon)","shared layout and icon components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify add/rename/delete category flows and CSV import/export round-trip"},{"?":"Verify account sign-out and update flow: dot/banner states, Restart dialog confirm + cancel paths"},{"*":"Import must handle empty/invalid CSVs with a toast, not a crash"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Settings page for category add/edit/delete, CSV export/import, account sign-out, update check with restart dialog and current app version.","IDD":[{"?":"Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field"},{"?":"Edit/delete gates are async: transactionCountForCategory decides if a category is in use before opening its dialog (by id)"},{"?":"Export builds CSV inline (with # Exported timestamp) and downloads via downloadFile with a date-stamped filename"},{"?":"Import parses via parseTransactionsCSV then importTransactions"},{"?":"Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads"},{"?":"Account card shows the signed-in email and calls getSupabase().auth.signOut()"}],"A":[{"!!!":"app/settings/page.tsx","CRITICAL":"rendered by the route"},{"?":"CategoryEditDialog and DeleteCategoryDialog","note":"opened from the category list"}],"AB":[{"?":"lib/hooks/useServiceWorkerUpdate.ts","note":"update status/actions"},{"?":"lib/version.ts","note":"generated APP_VERSION constant shown in Update card"},{"?":"lib/hooks/useTransactions.ts","note":"useCategories"},{"?":"lib/auth/AuthProvider.tsx","note":"useAuth session for the account card"},{"?":"lib/supabase/client.ts","note":"getSupabase signOut"},{"?":"lib/csv.ts","note":"parseTransactionsCSV"},{"?":"lib/db/repository.ts","note":"addCategory, exportData, importTransactions, transactionCountForCategory"},{"?":"lib/format.ts","note":"downloadFile, todayISO"},{"?":"lib/validations/transaction.ts","note":"categorySchema, CategoryInput"},{"?":"lib/db/types.ts","note":"Category type"},{"?":"components/shared (Header, BottomNav, CategoryIcon)","note":"shared layout and icon components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify add/rename/delete category flows and CSV import/export round-trip"},{"?":"Verify account sign-out and update flow: dot/banner states, Restart dialog confirm + cancel paths"},{"*":"Import must handle empty/invalid CSVs with a toast, not a crash"}]} */
 
 "use client";
 
@@ -120,20 +120,20 @@ export function SettingsView() {
   const handleExportCSV = async () => {
     try {
       const { transactions } = await exportData();
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const timestamp =
-      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
-      `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const csv = [
-      `# Exported: ${timestamp}`,
-      ["id", "date", "type", "amount", "category", "description"].join(","),
-      ...transactions.map((t) =>
-        [t.id, t.date, t.type, t.amount, `"${t.category}"`, `"${t.description ?? ""}"`].join(",")
-      ),
-    ].join("\n");
-    downloadFile(`cash-guard-transactions-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
-    toast.success("CSV downloaded");
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const timestamp =
+        `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
+        `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const csv = [
+        `# Exported: ${timestamp}`,
+        ["id", "date", "type", "amount", "category", "description"].join(","),
+        ...transactions.map((t) =>
+          [t.id, t.date, t.type, t.amount, `"${t.category}"`, `"${t.description ?? ""}"`].join(",")
+        ),
+      ].join("\n");
+      downloadFile(`cash-guard-transactions-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
+      toast.success("CSV downloaded");
     } catch {
       toast.error("Could not export data");
     }
