@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Confirmation dialog for deleting a transaction, with success/error toasts.","IDD":[{"?":"Calls deleteTransaction and always closes via onOpenChange(false) afterward"}],"A":[{"?":"components/transactions/TransactionsView.tsx","rendered with the tx to delete"}],"AB":[{"?":"lib/db/repository.ts","deleteTransaction"},{"?":"lib/db/schema.ts","Transaction type"},{"?":"components/ui/dialog.tsx, components/ui/button.tsx, sonner","UI and toast dependencies"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify toast on success and error; dialog closes in both cases"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Confirmation dialog for deleting a transaction, with success/error toasts.","IDD":[{"?":"Calls deleteTransaction and always closes via onOpenChange(false) afterward"}],"A":[{"?":"components/transactions/TransactionsView.tsx","note":"rendered with the tx to delete"}],"AB":[{"?":"lib/db/repository.ts","note":"deleteTransaction"},{"?":"lib/db/types.ts","note":"Transaction type"},{"?":"components/ui/dialog.tsx, components/ui/button.tsx, sonner","note":"UI and toast dependencies"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify toast on success and error; dialog closes in both cases"}]} */
 
 "use client";
 
@@ -13,7 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { Transaction } from "@/lib/db/schema";
+import type { Transaction } from "@/lib/db/types";
 
 export function DeleteTransactionDialog({
   tx,

@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs derived total budget with a tier-colored Progress bar, empty state, and a Breakdown card listing per-category budgets (spent-vs-allotted rows with tier hints, Edit/Remove actions) plus the CategoryBudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: totalBudget undefined = query pending (Loading…), 0 after load = no budget (empty state), >0 = summary — loading = totalBudget === undefined || spent === undefined; Breakdown hint renders only when totalBudget === 0 after load (never while undefined/loading)"},{"!!":"Add breakdown stays disabled while loading (data pending); after load, always enabled regardless of overall budget — no gating on overall budget existence; breakdown rows join ids via parseCategoryBudgetId then sort by category name (localeCompare) before rendering; unknown ids are dropped"},{"?":"CatDialogOpen drives CategoryBudgetDialog only (Add/Edit breakdown); editing distinguishes Add (Select free) from Edit (Select locked); dialog gets only unallocated expense categories since edit mode displays via watchCategory"}],"A":[{"!!!":"app/budget/page.tsx","renders this view"},{"!!":"components/budget/CategoryBudgetDialog.tsx","opened for add/edit breakdown"},{"?":"tests/budgetView.test.ts","asserts the empty state renders when no budget rows exist"},{"?":"tests/categoryBudgetView.test.ts","asserts breakdown gating, row content, tier hint, Edit/Remove"}],"AB":[{"?":"lib/hooks/useBudget.ts","useTotalBudget, useMonthlySpent, useCategoryBudgets, useMonthlySpentByCategory supply data"},{"?":"lib/db/schema.ts","parseCategoryBudgetId for breakdown row mapping"},{"?":"lib/budget.ts","budgetTier for progress tier calculation"},{"?":"lib/format.ts","formatPeso for currency formatting"}],"E":[{"!!":"npm test -- tests/budgetView.test.ts","empty state must render when budgets.toArray resolves []"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","breakdown rows render from toArray filtering + name-keyed spend, button enabled when loaded"},{"!!":"npm run build","types must align with useTotalBudget returning number | undefined"},{"!":"npm run lint","no unused imports or stale references"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Budget screen (/budget) — shows remaining vs derived total budget with a tier-colored Progress bar, empty state, and a Breakdown card listing per-category budgets (spent-vs-allotted rows with tier hints, Edit/Remove actions) plus the CategoryBudgetDialog.","IDD":[{"?":"Shared shell: Header + centered max-w-md column + pb-20 + fixed BottomNav"},{"!!":"Tier visual maps live in components/budget/tierStyles.ts (BAR_COLOR/HINT_COLOR/HINT_TEXT) — extracted so dashboard meter and category breakdowns reuse the exact same classes; do not reintroduce local copies"},{"!!":"Three-state loading: totalBudget undefined = query pending (Loading…), 0 after load = no budget (empty state), >0 = summary — loading is totalBudget === undefined alone; Breakdown hint renders only when totalBudget === 0 after load (never while undefined/loading)"},{"!!":"Add breakdown stays disabled while loading (data pending); after load, always enabled regardless of overall budget — no gating on overall budget existence; breakdown rows join ids via budget.categoryId then sort by category name (localeCompare) before rendering; unknown ids are dropped"},{"?":"CatDialogOpen drives CategoryBudgetDialog only (Add/Edit breakdown); editing distinguishes Add (Select free) from Edit (Select locked); dialog gets only unallocated expense categories since edit mode displays via watchCategory"}],"A":[{"!!!":"app/budget/page.tsx","note":"renders this view"},{"!!":"components/budget/CategoryBudgetDialog.tsx","note":"opened for add/edit breakdown"},{"?":"tests/budgetView.test.ts","note":"asserts the empty state renders when no budget rows exist"},{"?":"tests/categoryBudgetView.test.ts","note":"asserts breakdown gating, row content, tier hint, Edit/Remove"}],"AB":[{"?":"lib/hooks/useBudget.ts","note":"useTotalBudget, useCategoryBudgets, useMonthlySpentByCategory supply data"},{"?":"lib/db/types.ts","note":"Category and Budget types (Budget.categoryId)"},{"?":"lib/budget.ts","note":"budgetTier for progress tier calculation"},{"?":"lib/format.ts","note":"formatPeso for currency formatting"}],"E":[{"!!":"npm test -- tests/budgetView.test.ts","note":"empty state must render when getCategoryBudgets resolves []"},{"!!":"npm test -- tests/categoryBudgetView.test.ts","note":"breakdown rows join budget.categoryId + name-keyed spend, button enabled when loaded"},{"!!":"npm run build","note":"types must align with useTotalBudget returning number | undefined"},{"!":"npm run lint","note":"no unused imports or stale references"}]} */
 
 "use client";
 
@@ -18,7 +18,7 @@ import {
   useMonthlySpentByCategory,
 } from "@/lib/hooks/useBudget";
 import { useCategories } from "@/lib/hooks/useTransactions";
-import { parseCategoryBudgetId, type Category } from "@/lib/db/schema";
+import type { Category } from "@/lib/db/types";
 import { deleteCategoryBudget } from "@/lib/db/repository";
 import { budgetTier } from "@/lib/budget";
 import { BAR_COLOR, HINT_COLOR, HINT_TEXT } from "@/components/budget/tierStyles";
@@ -44,17 +44,17 @@ export function BudgetView() {
   const resolvedCatBudgets = catBudgets ?? [];
 
   const filteredSpent = resolvedCatBudgets.reduce((sum, b) => {
-    const cat = allCategories.find((c) => c.id === parseCategoryBudgetId(b.id));
+    const cat = allCategories.find((c) => c.id === b.categoryId);
     return sum + (cat ? (spentByCat[cat.name] ?? 0) : 0);
   }, 0);
 
   const unallocated = allCategories.filter(
-    (c) => c.type === "expense" && !resolvedCatBudgets.some((b) => parseCategoryBudgetId(b.id) === c.id)
+    (c) => c.type === "expense" && !resolvedCatBudgets.some((b) => b.categoryId === c.id)
   );
 
   const breakdownRows = resolvedCatBudgets
     .flatMap((b) => {
-      const cat = allCategories.find((c) => c.id === parseCategoryBudgetId(b.id));
+      const cat = allCategories.find((c) => c.id === b.categoryId);
       return cat ? [{ b, cat }] : [];
     })
     .sort((a, z) => a.cat.name.localeCompare(z.cat.name));

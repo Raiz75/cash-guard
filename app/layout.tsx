@@ -1,9 +1,12 @@
-/* AI-CONTEXT-NOTE:{"R":"Root layout - loads fonts, sets metadata/viewport/manifest, and wraps every route in the ThemeProvider and Toaster.","IDD":[{"?":"Fonts (Roboto/Inter/Geist) are loaded via next/font and exposed as CSS variables consumed by globals.css."},{"?":"suppressHydrationWarning is required on <html> because next-themes swaps classes."},{"?":"App is client-driven (force-dynamic pages); this layout is the server shell."}],"A":[{"!!!":"Every route: app/page.tsx, app/transactions/page.tsx, app/settings/page.tsx","CRITICAL":"Removing ThemeProvider or Toaster breaks theming/toasts app-wide"},{"?":"app/globals.css","font variables --font-sans / --font-geist-mono / --font-heading"}],"AB":[{"?":"components/theme-provider.tsx","theme behavior"},{"?":"components/ui/sonner.tsx","Toaster"},{"?":"lib/utils.ts","cn for the <html> className"},{"?":"next.config.ts / tsconfig.json","next/font resolution, path alias"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify manifest, appleWebApp, and viewport (themeColor) still set"},{"?":"Verify no hydration mismatch warnings (suppressHydrationWarning stays)"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Root layout - loads fonts, sets metadata/viewport/manifest, and wraps every route in ThemeProvider, QueryProvider, AuthProvider, and AuthGate plus Toaster.","IDD":[{"?":"Fonts (Roboto/Inter/Geist) are loaded via next/font and exposed as CSS variables consumed by globals.css."},{"?":"suppressHydrationWarning is required on <html> because next-themes swaps classes."},{"?":"App is client-driven (force-dynamic pages); this layout is the server shell."},{"?":"AuthProvider/AuthGate gate the whole app behind Supabase auth and add the online/error shell"}],"A":[{"!!!":"Every route: app/page.tsx, app/transactions/page.tsx, app/settings/page.tsx","CRITICAL":"Removing ThemeProvider/QueryProvider/AuthProvider/AuthGate/Toaster breaks theming/queries/auth/toasts app-wide"},{"?":"app/globals.css","font variables --font-sans / --font-geist-mono / --font-heading"}],"AB":[{"?":"components/theme-provider.tsx","theme behavior"},{"?":"components/providers/QueryProvider.tsx","query client"},{"?":"lib/auth/AuthProvider.tsx","auth context"},{"?":"components/auth/AuthGate.tsx","auth gate"},{"?":"components/ui/sonner.tsx","Toaster"},{"?":"lib/utils.ts","cn for the <html> className"},{"?":"next.config.ts / tsconfig.json","next/font resolution, path alias"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify manifest, appleWebApp, and viewport (themeColor) still set"},{"?":"Verify no hydration mismatch warnings (suppressHydrationWarning stays)"}]} */
 
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter, Roboto } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { AuthGate } from "@/components/auth/AuthGate";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +51,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          {children}
+          <QueryProvider>
+            <AuthProvider>
+              <AuthGate>{children}</AuthGate>
+            </AuthProvider>
+          </QueryProvider>
           <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>

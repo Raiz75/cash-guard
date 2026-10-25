@@ -1,11 +1,11 @@
-/* AI-CONTEXT-NOTE:{"R":"Confirmation dialog for deleting a category; when transactions use it, requires selecting a same-type category to reassign them first.","IDD":[{"?":"If the category is in use (count > 0), delete is disabled until a reassign target is chosen; reassignCategory moves transactions before deleting"}],"A":[{"?":"components/settings/SettingsView.tsx","opened from the category list"}],"AB":[{"?":"lib/db/repository.ts","deleteCategory, reassignCategory"},{"?":"lib/db/schema.ts","Category type"},{"?":"components/ui (dialog, select, button)","Base UI components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify the in-use path (reassign required) and the unused path (direct delete)"},{"*":"With no candidates, the Delete button must stay disabled"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Confirmation dialog for deleting a category; when transactions use it, requires selecting a same-type category to reassign them first.","IDD":[{"?":"If the category is in use (count > 0), delete is disabled until a reassign target is chosen; reassignCategory moves transactions by id before deleting"}],"A":[{"?":"components/settings/SettingsView.tsx","note":"opened from the category list"}],"AB":[{"?":"lib/db/repository.ts","note":"deleteCategory, reassignCategory"},{"?":"lib/db/types.ts","note":"Category type"},{"?":"components/ui (dialog, select, button)","note":"Base UI components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify the in-use path (reassign required) and the unused path (direct delete)"},{"*":"With no candidates, the Delete button must stay disabled"}]} */
 
 "use client";
 
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteCategory, reassignCategory } from "@/lib/db/repository";
-import type { Category } from "@/lib/db/schema";
+import type { Category } from "@/lib/db/types";
 import {
   Dialog,
   DialogContent,
@@ -40,11 +40,13 @@ export function DeleteCategoryDialog({
   const [target, setTarget] = useState("");
   const needTarget = count > 0;
 
+  const items = Object.fromEntries(candidates.map((c) => [c.id, c.name]));
+
   const handleDelete = async () => {
     try {
       if (needTarget) {
         if (!target) return;
-        await reassignCategory(category.name, target);
+        await reassignCategory(category.id, target);
       }
       await deleteCategory(category.id);
       toast.success("Category deleted");
@@ -73,13 +75,13 @@ export function DeleteCategoryDialog({
                 You need another {category.type} category to move transactions to.
               </p>
             ) : (
-              <Select value={target || null} onValueChange={(v) => setTarget(v ?? "")}>
+              <Select items={items} value={target || null} onValueChange={(v) => setTarget(v ?? "")}>
                 <SelectTrigger id="reassign" className="w-full">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
                   {candidates.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>
+                    <SelectItem key={c.id} value={c.id}>
                       {c.name}
                     </SelectItem>
                   ))}

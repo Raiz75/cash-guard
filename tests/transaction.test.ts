@@ -1,7 +1,8 @@
-/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/validations/transaction.ts — Zod schema parsing, coercion, and inferred input types.","IDD":[{"?":"transactionSchema coerces amount to number and allows optional id/description"}],"A":[{"!":"lib/validations/transaction.ts","exercised by these tests"},{"?":"lib/db/repository.ts","safeParse gates imported rows"},{"?":"components/transactions/TransactionForm.tsx","resolver uses TransactionInput"}],"AB":[{"?":"vitest.config.ts"}],"E":[{"!!":"npm test validation"},{"?":"Positive amount enforcement is user-facing — verify error messages"},{"*":"amount coercion from string to number is the key import path"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Vitest tests for lib/validations/transaction.ts — Zod schema parsing, coercion, and inferred input types.","IDD":[{"?":"transactionSchema coerces amount to number and allows optional id/description"},{"?":"csvRowSchema is stricter: date must be YYYY-MM-DD and a real calendar date (rejects 2024-02-30)"}],"A":[{"!":"lib/validations/transaction.ts","exercised by these tests"},{"?":"lib/db/repository.ts","safeParse gates imported rows"},{"?":"components/transactions/TransactionForm.tsx","resolver uses TransactionInput"}],"AB":[{"?":"vitest.config.ts"}],"E":[{"!!":"npm test validation"},{"?":"Positive amount enforcement is user-facing — verify error messages"},{"*":"amount coercion from string to number is the key import path"},{"*":"csvRowSchema rejects invalid calendar dates like 2024-02-30"}]} */
 import { describe, it, expect } from "vitest";
 import {
   transactionSchema,
+  csvRowSchema,
   categorySchema,
   type TransactionInput,
   type CategoryInput,
@@ -138,6 +139,81 @@ describe("transactionSchema", () => {
     });
     expect(result.success).toBe(true);
     expect((result.data as TransactionInput).id).toBe("abc-123");
+  });
+});
+
+describe("csvRowSchema (strict date validation)", () => {
+  it("accepts a valid YYYY-MM-DD date", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "2024-06-01",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid calendar date (Feb 30)", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "2024-02-30",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("date");
+    }
+  });
+
+  it("rejects invalid calendar date (Apr 31)", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "2024-04-31",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects malformed date format (MM-DD-YYYY)", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "06-01-2024",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects malformed date format (DD/MM/YYYY)", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "01/06/2024",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts leap day on leap year", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "2024-02-29",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects leap day on non-leap year", () => {
+    const result = csvRowSchema.safeParse({
+      type: "expense",
+      amount: 100,
+      category: "Food",
+      date: "2023-02-29",
+    });
+    expect(result.success).toBe(false);
   });
 });
 
