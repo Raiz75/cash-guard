@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Renders a transaction list; each row shows an income/expense indicator, amount, and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.","IDD":[{"?":"Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead of text badges"},{"?":"Income rows use text-primary (teal) and '+'; expense rows use text-destructive and '-'"}],"A":[{"?":"components/transactions/TransactionsView.tsx","renders TransactionList"}],"AB":[{"?":"lib/db/schema.ts","Transaction type"},{"?":"lib/format.ts","formatPeso, formatDisplayDate"},{"?":"lib/utils.ts","cn for row styling"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify aria-labels, empty state text, and +/- amount signs"},{"*":"Long descriptions must truncate without breaking layout"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Renders a transaction list; each row shows an income/expense indicator, amount, and ghost edit/delete icon buttons. Exports TransactionItem and TransactionList.","IDD":[{"?":"Row actions use Tabler icon buttons (IconPencil/IconTrash) with aria-labels instead of text badges"},{"?":"Income rows use text-primary (teal) and '+'; expense rows use text-destructive and '-'"}],"A":[{"?":"components/transactions/TransactionsView.tsx","note":"renders TransactionList"}],"AB":[{"?":"lib/db/types.ts","note":"Transaction type"},{"?":"lib/format.ts","note":"formatPeso, formatDisplayDate"},{"?":"lib/utils.ts","note":"cn for row styling"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify aria-labels, empty state text, and +/- amount signs"},{"*":"Long descriptions must truncate without breaking layout"}]} */
 
 "use client";
 
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatPeso, formatDisplayDate } from "@/lib/format";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import type { Transaction } from "@/lib/db/schema";
+import type { Transaction } from "@/lib/db/types";
 
 export function TransactionItem({
   tx,

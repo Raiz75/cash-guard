@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Vitest DOM test for components/transactions/TransactionForm.tsx budget-toast wiring — regression guard that one expense save fires the category-breakdown warning toast, and that warning-lookup failures never turn a successful save into an error toast.","IDD":[{"?":"Mocks ONLY module boundaries — sonner toast, @/lib/db/repository (four fns as vi.fn), and @/lib/hooks/useTransactions (useCategories) — so no Dexie/IndexedDB is ever touched"},{"?":"Uses vi.hoisted for the mock registry so vi.mock factory hoisting can reference them"},{"?":"Stateful getMonthlySpentByCategory phase counters simulate before(200)→after(500) spend around a single save, driving Food category 40%→100% (over)"},{"?":"Uses React.createElement instead of JSX so the file stays .ts per repo test naming"},{"!!":"Submits via fireEvent.submit(<form>) NOT button click — happy-dom does not perform implicit form submission on submit-button clicks, so a click never reaches RHF handleSubmit"}],"A":[{"!!":"components/transactions/TransactionForm.tsx","CRITICAL":"onSubmit snapshot/recompute ordering and toast copy — any reorder breaks the Nth-called assertions"},{"?":"lib/budget.ts","crossedTier thresholds and budgetTierMessage label interpolation define the expected strings"},{"?":"lib/db/repository.ts","export names must match the mock surface"}],"AB":[{"?":"tests/repository.test.ts","source of the repo's mock pattern"},{"?":"@testing-library/react + jest-dom","render/waitFor and matchers"},{"?":"vitest.config.mts","happy-dom environment required for fireEvent"}],"E":[{"!!!":"npm test -- tests/transactionFormToast.test.ts","the suite must pass before any TransactionForm toast change merges"},{"!!":"Warning assertion: category toast must fire with the correct message"},{"*":"Rejection case asserts zero error AND zero warning toasts while success still fires"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Vitest DOM test for components/transactions/TransactionForm.tsx budget-toast wiring — regression guard that one expense save fires the category-breakdown warning toast, and that warning-lookup failures never turn a successful save into an error toast.","IDD":[{"?":"Mocks ONLY module boundaries — sonner toast, @/lib/db/repository (four fns as vi.fn), and @/lib/hooks/useTransactions (useCategories) — so no Dexie/IndexedDB is ever touched"},{"?":"Uses vi.hoisted for the mock registry so vi.mock factory hoisting can reference them"},{"?":"Stateful getMonthlySpentByCategory phase counters simulate before(200)→after(500) spend around a single save, driving Food category 40%→100% (over)"},{"?":"Uses React.createElement instead of JSX so the file stays .ts per repo test naming"},{"!!":"Submits via fireEvent.submit(<form>) NOT button click — happy-dom does not perform implicit form submission on submit-button clicks, so a click never reaches RHF handleSubmit"}],"A":[{"!!":"components/transactions/TransactionForm.tsx","CRITICAL":"onSubmit snapshot/recompute ordering and toast copy — any reorder breaks the Nth-called assertions"},{"?":"lib/budget.ts","note":"crossedTier thresholds and budgetTierMessage label interpolation define the expected strings"},{"?":"lib/db/repository.ts","note":"export names must match the mock surface"}],"AB":[{"?":"tests/repository.test.ts","note":"source of the repo's mock pattern"},{"?":"@testing-library/react + jest-dom","note":"render/waitFor and matchers"},{"?":"vitest.config.mts","note":"happy-dom environment required for fireEvent"}],"E":[{"!!!":"npm test -- tests/transactionFormToast.test.ts","note":"the suite must pass before any TransactionForm toast change merges"},{"!!":"Warning assertion: category toast must fire with the correct message"},{"*":"Rejection case asserts zero error AND zero warning toasts while success still fires"}]} */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createElement } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -35,7 +35,7 @@ beforeEach(() => {
   mocks.addTransaction.mockClear();
 
   mocks.getCategoryBudgets.mockResolvedValue([
-    { id: "cat:c1", amount: 500, createdAt: 1, updatedAt: 1 },
+    { id: "b1", categoryId: "c1", amount: 500, createdAt: 1, updatedAt: 1 },
   ]);
   let catPhase = 0;
   mocks.getMonthlySpentByCategory.mockImplementation(async () =>
@@ -73,5 +73,18 @@ describe("TransactionForm budget toasts", () => {
     });
     expect(mocks.toast.error).not.toHaveBeenCalled();
     expect(mocks.toast.warning).not.toHaveBeenCalled();
+  });
+
+  it("shows an error toast and no success toast when the save fails", async () => {
+    mocks.addTransaction.mockRejectedValueOnce(new Error("network down"));
+    const { container } = render(createElement(TransactionForm));
+    fireEvent.change(screen.getByLabelText("Amount (₱)"), { target: { value: "10" } });
+    fireEvent.submit(container.querySelector("form")!);
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        "Something went wrong saving the transaction"
+      );
+    });
+    expect(mocks.toast.success).not.toHaveBeenCalled();
   });
 });
