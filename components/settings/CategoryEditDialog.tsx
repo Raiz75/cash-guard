@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Dialog to rename a category and optionally change its type; type is locked when the category is in use.","IDD":[{"?":"Renaming relies on updateCategory's cascade (transactions follow the new name)"},{"?":"useWatch (not form.watch) reads the type for the income/expense buttons"}],"A":[{"?":"components/settings/SettingsView.tsx","opened from the category list"}],"AB":[{"?":"lib/db/repository.ts","updateCategory"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/schema.ts","Category type"},{"?":"components/ui (dialog, button, input)","Base UI components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify rename cascades to transactions and type buttons disabled when in use"},{"*":"updateCategory errors (e.g. Category not found) must surface via toast"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Dialog to rename a category and optionally change its type; type is locked when the category is in use.","IDD":[{"?":"Transactions reference category_id, so renaming the category updates the display name everywhere without a cascade"},{"?":"useWatch (not form.watch) reads the type for the income/expense buttons"}],"A":[{"?":"components/settings/SettingsView.tsx","opened from the category list"}],"AB":[{"?":"lib/db/repository.ts","updateCategory"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/types.ts","Category type"},{"?":"components/ui (dialog, button, input)","Base UI components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify rename applies everywhere and type buttons disabled when in use"},{"*":"updateCategory errors (e.g. Category not found) must surface via toast"}]} */
 
 "use client";
 
@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { categorySchema, type CategoryInput } from "@/lib/validations/transaction";
 import { updateCategory } from "@/lib/db/repository";
-import type { Category } from "@/lib/db/schema";
+import type { Category } from "@/lib/db/types";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +54,7 @@ export function CategoryEditDialog({
         <DialogHeader>
           <DialogTitle>Edit category</DialogTitle>
           <DialogDescription>
-            Renaming moves existing transactions to the new name.
+            Changes apply everywhere this category is used.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

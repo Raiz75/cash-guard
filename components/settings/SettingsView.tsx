@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Settings page for category add/edit/delete, CSV export/import, update check with restart dialog and current app version.","IDD":[{"?":"Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field"},{"?":"Edit/delete gates are async: transactionCountForCategory decides if a category is in use before opening its dialog"},{"?":"Export builds CSV inline (with # Exported timestamp) and downloads via downloadFile with a date-stamped filename"},{"?":"Import parses via parseTransactionsCSV then importTransactions"},{"?":"Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads"},{"?":"Shows current app version (APP_VERSION from generated lib/version.ts)"}],"A":[{"!!!":"app/settings/page.tsx","CRITICAL":"rendered by the route"},{"?":"CategoryEditDialog and DeleteCategoryDialog","opened from the category list"}],"AB":[{"?":"lib/hooks/useServiceWorkerUpdate.ts","update status/actions"},{"?":"lib/version.ts","generated APP_VERSION constant shown in Update card"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/csv.ts","parseTransactionsCSV"},{"?":"lib/db/repository.ts","addCategory, exportData, importTransactions, transactionCountForCategory"},{"?":"lib/format.ts","downloadFile, todayISO"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/schema.ts","Category type"},{"?":"components/shared (Header, BottomNav, CategoryIcon)","shared layout and icon components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify add/rename/delete category flows and CSV import/export round-trip"},{"?":"Verify update flow: dot/banner states, Restart dialog confirm + cancel paths"},{"*":"Import must handle empty/invalid CSVs with a toast, not a crash"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Settings page for category add/edit/delete, CSV export/import, account sign-out, update check with restart dialog and current app version.","IDD":[{"?":"Add-category uses React Hook Form + categorySchema; type toggle drives a hidden form field"},{"?":"Edit/delete gates are async: transactionCountForCategory decides if a category is in use before opening its dialog (by id)"},{"?":"Export builds CSV inline (with # Exported timestamp) and downloads via downloadFile with a date-stamped filename"},{"?":"Import parses via parseTransactionsCSV then importTransactions"},{"?":"Update card uses useServiceWorkerUpdate; dot lights up (bg-primary) when a new SW is waiting; Restart posts SKIP_WAITING then reloads"},{"?":"Account card shows the signed-in email and calls getSupabase().auth.signOut()"}],"A":[{"!!!":"app/settings/page.tsx","CRITICAL":"rendered by the route"},{"?":"CategoryEditDialog and DeleteCategoryDialog","opened from the category list"}],"AB":[{"?":"lib/hooks/useServiceWorkerUpdate.ts","update status/actions"},{"?":"lib/version.ts","generated APP_VERSION constant shown in Update card"},{"?":"lib/hooks/useTransactions.ts","useCategories"},{"?":"lib/auth/AuthProvider.tsx","useAuth session for the account card"},{"?":"lib/supabase/client.ts","getSupabase signOut"},{"?":"lib/csv.ts","parseTransactionsCSV"},{"?":"lib/db/repository.ts","addCategory, exportData, importTransactions, transactionCountForCategory"},{"?":"lib/format.ts","downloadFile, todayISO"},{"?":"lib/validations/transaction.ts","categorySchema, CategoryInput"},{"?":"lib/db/types.ts","Category type"},{"?":"components/shared (Header, BottomNav, CategoryIcon)","shared layout and icon components"}],"E":[{"!!":"npm run build"},{"!!":"npm run lint"},{"?":"Verify add/rename/delete category flows and CSV import/export round-trip"},{"?":"Verify account sign-out and update flow: dot/banner states, Restart dialog confirm + cancel paths"},{"*":"Import must handle empty/invalid CSVs with a toast, not a crash"}]} */
 
 "use client";
 
@@ -7,8 +7,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Download, Plus } from "lucide-react";
-import { IconUpload } from "@tabler/icons-react";
+import { IconUpload, IconLogout } from "@tabler/icons-react";
 import { useCategories } from "@/lib/hooks/useTransactions";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { getSupabase } from "@/lib/supabase/client";
 import { parseTransactionsCSV } from "@/lib/csv";
 import {
   addCategory,
@@ -37,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CategoryEditDialog } from "@/components/settings/CategoryEditDialog";
 import { DeleteCategoryDialog } from "@/components/settings/DeleteCategoryDialog";
-import type { Category } from "@/lib/db/schema";
+import type { Category } from "@/lib/db/types";
 import { Header } from "@/components/shared/Header";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
@@ -49,6 +51,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function SettingsView() {
   const categories = useCategories() ?? [];
+  const { session } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const { status, checkForUpdates, applyUpdate } = useServiceWorkerUpdate();
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
@@ -68,17 +71,25 @@ export function SettingsView() {
   } | null>(null);
 
   const openEdit = async (c: Category) => {
-    const inUse = await transactionCountForCategory(c.name);
-    setEditing({ category: c, inUse });
+    try {
+      const inUse = await transactionCountForCategory(c.id);
+      setEditing({ category: c, inUse });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not load category");
+    }
   };
 
   const openDelete = async (c: Category) => {
-    const count = await transactionCountForCategory(c.name);
-    setDeleting({
-      category: c,
-      count,
-      candidates: categories.filter((x) => x.type === c.type && x.id !== c.id),
-    });
+    try {
+      const count = await transactionCountForCategory(c.id);
+      setDeleting({
+        category: c,
+        count,
+        candidates: categories.filter((x) => x.type === c.type && x.id !== c.id),
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not load category");
+    }
   };
 
   const handleImportCSV = async (file: File) => {
@@ -97,13 +108,18 @@ export function SettingsView() {
   };
 
   const addNew = async (data: CategoryInput) => {
-    await addCategory(data);
-    toast.success(`Added "${data.name}"`);
-    form.reset({ name: "", type: data.type });
+    try {
+      await addCategory(data);
+      toast.success(`Added "${data.name}"`);
+      form.reset({ name: "", type: data.type });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add category");
+    }
   };
 
   const handleExportCSV = async () => {
-    const { transactions } = await exportData();
+    try {
+      const { transactions } = await exportData();
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
     const timestamp =
@@ -118,6 +134,9 @@ export function SettingsView() {
     ].join("\n");
     downloadFile(`cash-guard-transactions-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
     toast.success("CSV downloaded");
+    } catch {
+      toast.error("Could not export data");
+    }
   };
 
   return (
@@ -220,6 +239,24 @@ export function SettingsView() {
                 </div>
               ))
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm text-muted-foreground">{session?.user.email ?? ""}</p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                void getSupabase().auth.signOut().catch(() => {});
+              }}
+            >
+              <IconLogout className="mr-1 h-4 w-4" /> Sign out
+            </Button>
           </CardContent>
         </Card>
 
