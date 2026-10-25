@@ -1,4 +1,4 @@
-/* AI-CONTEXT-NOTE:{"R":"Tests lib/legacyCleanup.ts deleteLegacyDatabase resolves via indexedDB.deleteDatabase and tolerates missing indexedDB.","IDD":[{"?":"Stubs indexedDB.deleteDatabase with a request resolved on a microtask"},{"?":"Asserts the legacy DB name cash-guard is used"}],"A":[{"!!":"lib/legacyCleanup.ts","CRITICAL":"deleteLegacyDatabase contract"}],"AB":[{"?":"vitest happy-dom env","indexedDB availability"}],"E":[{"!!":"npm test -- tests/legacyCleanup.test.ts"}]} */
+/* AI-CONTEXT-NOTE:{"R":"Tests lib/legacyCleanup.ts deleteLegacyDatabase resolves via the browser deleteDatabase API and tolerates a missing API.","IDD":[{"?":"Stubs deleteDatabase with a request resolved on a microtask"},{"?":"Asserts the legacy DB name cash-guard is used"}],"A":[{"!!":"lib/legacyCleanup.ts","CRITICAL":"deleteLegacyDatabase contract"}],"AB":[{"?":"vitest happy-dom env","note":"browser database availability"}],"E":[{"!!":"npm test -- tests/legacyCleanup.test.ts"}]} */
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 import { deleteLegacyDatabase } from "@/lib/legacyCleanup";

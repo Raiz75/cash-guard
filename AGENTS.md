@@ -59,7 +59,7 @@ Cash Guard is a PWA — "download" means **install it to the home screen**:
 
 ## Conventions & gotchas
 
-- **Node ≥ 20.9 is required** (Next.js 16). The user's system Node is 18 — use `~/.local/node/bin` (a user-local Node 22 install) on this machine.
+- **Node ≥ 20.9 is required** (Next.js 16). This machine currently runs Node 24 (`node -v` → v24.14.0).
 - **shadcn preset is "base-maia"** (components.json `style: "base-maia"`, `iconLibrary: "tabler"`). Use Tabler icons (`@tabler/icons-react`), not lucide, for new UI.
 - **Base UI differences:** the shadcn `Button` component uses Base UI. Polymorphism is via the `render` prop, not `asChild`. When rendering a non-`<button>` element (e.g. `<Link>`) via `render`, **set `nativeButton={false}`** to avoid the console warning.
 - **Base UI Select** `value`/`onValueChange` are `string | null` — coerce with `?? ""`/`?? null` guards to satisfy TypeScript.
