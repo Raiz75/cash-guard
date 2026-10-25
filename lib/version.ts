@@ -1,2 +1,2 @@
 // GENERATED FILE - do not edit. Regenerate with `npm run build`.
-export const APP_VERSION = "1.4.6";
+export const APP_VERSION = "2.0.0";

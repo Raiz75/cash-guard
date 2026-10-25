@@ -2,9 +2,9 @@
 
 ## What this is
 
-A **mobile-first personal finance tracker PWA** built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui (Base UI, "maia" preset with Tabler icons), and Dexie for local storage.
+A **mobile-first personal finance tracker PWA** built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui (Base UI, "maia" preset with Tabler icons), Supabase (Postgres + Auth), and TanStack Query.
 
-**Key architectural fact: the app is local-first.** All data lives in the browser's IndexedDB via Dexie. There are **no API routes, no server database, no ORM, no environment secrets** — nothing is ever sent to a server. This keeps hosting free and makes it fully offline-capable.
+**Key architectural fact: the app is account-based and cloud-backed.** All data lives in a Supabase Postgres database, scoped per user via Row Level Security (RLS). There are **no API routes, no server actions, no server database of our own, no ORM** — the browser talks to Supabase directly through the publishable (anon) key, and RLS is the security boundary. The app is **online-only** for data (reads/writes require a connection), but the PWA shell stays installable and updatable offline. This keeps hosting free (Supabase free tier) while giving real accounts and cross-device sync.
 
 **Live deployment:** the app is published at **https://cash-guard-jet.vercel.app**. Users install it from there (see "Downloading / installing the app" below). There is no staging environment — pushing to `main` and deploying on Vercel updates the live site.
 
@@ -19,11 +19,18 @@ node -v
 # 2. Install dependencies
 npm install
 
-# 3. Run the dev server (no env vars, no DB to provision)
+# 3. Copy the env template and fill in both values from your Supabase project
+cp .env.example .env.local
+# edit .env.local: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+# 4. Create a Supabase project, then run supabase/migrations/20261024000000_init.sql
+#    in the Supabase SQL Editor to create the tables + RLS policies.
+
+# 5. Run the dev server
 npm run dev
 ```
 
-- There is **no `.env` file and no environment configuration** — nothing to copy, fill in, or mint. If a setup guide mentions secrets, it's describing a different project.
+- Environment configuration is exactly two `NEXT_PUBLIC_*` values (see `.env.example`). Never add a service-role key to the app — the publishable key is public and RLS is the security boundary.
 - `npm run build` runs `scripts/stamp-version.mjs` first, which stamps the SemVer from `package.json` into `public/sw.js`, `public/manifest.webmanifest`, and regenerates `lib/version.ts`. This is automatic and expected — the stamped files appear as working-tree changes and are committed with the release.
 - The service worker only registers in production builds (`process.env.NODE_ENV === "production"`), so update-check behavior won't show in `next dev`.
 
@@ -33,19 +40,22 @@ Cash Guard is a PWA — "download" means **install it to the home screen**:
 
 1. Open **https://cash-guard-jet.vercel.app** in a browser.
 2. **Android / Chrome:** use the browser menu → **Install app** (or "Add to Home screen"). **iOS / Safari:** Share → **Add to Home Screen**. **Desktop Chrome/Edge:** the install icon in the address bar.
-3. Once installed it launches full-screen like a native app and works offline.
+3. Once installed it launches full-screen like a native app. The shell works offline; data requires a connection.
 
 **Updating to a new version:** Cash Guard checks for updates on load. When a new version is deployed, open the app → **Settings → Update** → the status dot lights up → **Check for updates** → **Restart app**. There is no app-store update flow.
 
-**Moving data between devices:** data lives in the browser. Export via **Settings → Export CSV / Download JSON backup**, then import on the other device.
+**Moving data between devices:** data lives in your Supabase account and syncs automatically once signed in. CSV export/import (Settings) remains available as a backup/migration aid.
 
 ## How data works
 
-- **Schema** (`lib/db/schema.ts`): two Dexie tables — `transactions` (type income/expense, amount, category, description, date, createdAt) and `categories` (name, type, icon as a Tabler icon *name string*, color).
-- **Repository** (`lib/db/repository.ts`): the only module that touches IndexedDB — CRUD for transactions and categories, plus data export.
-- **Hooks** (`lib/hooks/useTransactions.ts`): `useLiveQuery` drives the UI reactively.
-- **No seeding**: the DB starts empty. There is no `seedIfEmpty` / defaults list — categories come only from user action (Add category form) or CSV import. Deleted categories stay deleted. **Never call a write (rw) transaction inside a `useLiveQuery` callback** — live queries are read-only and this throws a `ReadonlyError`.
-- **Backup/restore**: Settings → Export CSV / JSON. Data is per-browser; moving devices requires exporting/importing.
+- **Types** (`lib/db/types.ts`): `TransactionType`, `Category`, `Transaction` (with both `categoryId` and a derived `category` display name), and `Budget` (per-category, with `categoryId`, `createdAt`/`updatedAt` epoch ms).
+- **Client** (`lib/supabase/client.ts`): browser Supabase client built from the two `NEXT_PUBLIC_*` env vars.
+- **Repository** (`lib/db/repository.ts`): the **only** module that touches Supabase/Postgres — CRUD for transactions, categories, budgets, monthly spend, CSV import/export, and category reassignment. Writes never send `user_id` (the DB defaults it to `auth.uid()`); every successful write ends with `invalidateFinance()` to refresh TanStack Query caches.
+- **Hooks** (`lib/hooks/useTransactions.ts`, `lib/hooks/useBudget.ts`): TanStack Query hooks gated on the auth session (`enabled: !!session`) sharing the five query keys `["categories"]`, `["transactions"]`, `["budgets"]`, `["monthly-spent"]`, `["monthly-spent-by-category"]`. Writes invalidate the cache.
+- **Auth** (`lib/auth/AuthProvider.tsx`): email + password only; `useAuth()` exposes the session; `AuthGate` guards data screens.
+- **RLS:** all three tables (`transactions`, `categories`, `budgets`) live in `public` with UUID primary keys and `user_id uuid not null default auth.uid()`; RLS enabled, only `authenticated` has access.
+- **No seeding / offline writes:** categories come only from user action (Add category form) or CSV import. Deleted categories stay deleted. The app does not write data while offline.
+- **Backup/restore:** Settings → Export CSV / JSON. CSV import/export remains a backup feature even though data is cloud-synced.
 
 ## Conventions & gotchas
 
@@ -57,6 +67,9 @@ Cash Guard is a PWA — "download" means **install it to the home screen**:
 - **Theme colors:** use semantic tokens only — teal `--primary` for income/positive, `--destructive` for expense/negative. Do **not** hardcode `green-600`/`red-600` utilities (the maia preset is teal, not green).
 - **Forms:** React Hook Form + Zod (`lib/validations/transaction.ts`). Use `useWatch` (memo-safe) instead of `form.watch` in render to keep React Compiler lint clean.
 - **Pages:** dashboard (`/`), transactions (`/transactions`), settings (`/settings`) are `force-dynamic` client views. Shared shell: `Header`, `BottomNav`, centered `max-w-md` column with `pb-20` so content clears the fixed bottom nav.
+- **No API routes / server actions:** all data access goes through `lib/db/repository.ts` against Supabase. Never ship a service-role key.
+- **Query gating:** every query uses `enabled: !!session`; `refetchOnWindowFocus` and `refetchOnReconnect` stay enabled.
+- **Legacy cleanup:** `lib/legacyCleanup.ts` deletes the old Dexie IndexedDB database (`cash-guard`) once at boot during the migration. Do not remove until all users have migrated.
 
 ## Testing
 
@@ -65,7 +78,8 @@ The app uses **Vitest** (the JS/TS equivalent of `php artisan test`) with `happy
 - **Run the suite:** `npm test` (`npm test -- --watch` for interactive watch mode).
 - **Where tests live:** colocated in the repo-root `tests/` folder, one `*.test.ts` file per module (e.g. `tests/repository.test.ts`, `tests/format.test.ts`, `tests/csv.test.ts`, `tests/transaction.test.ts`).
 - **Config:** `vitest.config.mts` (ESM), `vitest.setup.ts` registers jest-dom matchers. The `@/*` tsconfig alias works inside tests.
-- **Mocking Dexie:** tests of `lib/db/repository.ts` swap the real Dexie `db` for an in-memory mock via `vi.hoisted` + `vi.mock("@/lib/db/schema", ...)` so no IndexedDB is required. Pure-logic modules (`lib/format.ts`, `lib/csv.ts`, `lib/validations/transaction.ts`) are tested directly.
+- **Repository tests:** exercise `lib/db/repository.ts` against a chainable fake Supabase client (no network, no IndexedDB). No Dexie mocks.
+- **Component tests:** wrap renders in a fresh `QueryClientProvider` with `retry: false` (and `gcTime: 0`) so cached query data never leaks between cases.
 - **Convention (required on every feature):** when adding or changing a feature, add a `tests/<module>.test.ts` (or extend an existing one) with **multiple test cases** — at minimum the happy path, the expected failure/validation-rejection case, and the relevant edge case — so regressions are caught.
 
 ## Verification
@@ -76,7 +90,7 @@ npm run lint    # must be clean
 npm test        # must pass — run the Vitest suite
 ```
 
-Always run both after changes and confirm output before claiming success.
+Always run all three after changes and confirm output before claiming success.
 
 ## File Convention: AI-CONTEXT-NOTE (required on every code file)
 
