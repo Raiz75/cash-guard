@@ -7,9 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const state = vi.hoisted(() => ({
   categories: [] as Array<Record<string, unknown>>,
   budgets: [] as Array<Record<string, unknown>>,
-  transactions: [] as Array<Record<string, unknown>>,
   spentByCategory: {} as Record<string, number>,
-  monthlySpent: 0,
 }));
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
@@ -18,9 +16,7 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
 
 vi.mock("@/lib/db/repository", () => ({
   listCategories: vi.fn(async () => state.categories),
-  listTransactions: vi.fn(async () => state.transactions),
   getCategoryBudgets: vi.fn(async () => state.budgets),
-  getMonthlySpent: vi.fn(async () => state.monthlySpent),
   getMonthlySpentByCategory: vi.fn(async () => state.spentByCategory),
   deleteCategoryBudget: vi.fn(async () => {}),
   setCategoryBudget: vi.fn(async () => {}),
@@ -38,9 +34,7 @@ function renderWithQuery(ui: ReactElement) {
 beforeEach(() => {
   state.categories = [];
   state.budgets = [];
-  state.transactions = [];
   state.spentByCategory = {};
-  state.monthlySpent = 0;
 });
 
 describe("BudgetView", () => {
